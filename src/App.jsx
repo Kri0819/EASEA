@@ -11,8 +11,8 @@ import {
 // ─────────────────────────────────────────────────────────────────
 //  § 1  CONFIG
 // ─────────────────────────────────────────────────────────────────
-const SB_URL  = "";
-const SB_ANON = "";
+const SB_URL  = import.meta.env.VITE_SUPABASE_URL  || "";
+const SB_ANON = import.meta.env.VITE_SUPABASE_ANON || "";
 const IS_MOCK = !SB_URL || !SB_ANON;
 
 // ─────────────────────────────────────────────────────────────────
