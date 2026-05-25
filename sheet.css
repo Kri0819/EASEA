@@ -1,0 +1,71 @@
+/* ══ Overlay veil ══ */
+.sveil {
+  position:fixed; inset:0;
+  background:rgba(8,16,30,.36);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  z-index:200; display:flex; align-items:flex-end; justify-content:center;
+  animation:fadeIn .15s;
+}
+
+/* ══ Glass panel ══ */
+.sglass {
+  background:var(--glass-str);
+  border:1px solid var(--glass-bd); border-bottom:none;
+  border-radius:30px 30px 0 0;
+  padding:22px 28px 54px;
+  width:100%; max-width:430px;
+  box-shadow:0 -4px 36px rgba(8,18,40,.10);
+  animation:riseUp .25s cubic-bezier(.16,1,.3,1);
+}
+
+/* ══ Handle ══ */
+.spull {
+  width:30px; height:3px;
+  background:var(--fog-bd); border-radius:99px;
+  margin:0 auto 22px;
+}
+
+/* ══ Hint text ══ */
+.swhisper {
+  font-size:13px; color:var(--ink3); font-weight:400;
+  text-align:center; margin-bottom:22px;
+  letter-spacing:.01em; line-height:1.6;
+}
+
+/* ══ Input ══ */
+.sfield {
+  width:100%; border:none;
+  border-bottom:2px solid var(--glass-bd);
+  background:transparent; padding:12px 0;
+  font-family:inherit; font-size:18px; font-weight:400;
+  color:var(--ink); outline:none;
+  transition:border-color .15s; line-height:1.4;
+}
+.sfield:focus       { border-color:var(--accent); }
+.sfield::placeholder { color:var(--ink4); }
+
+/* ══ Intent chips ══ */
+.sintents { display:flex; gap:8px; margin-top:22px; }
+.sint {
+  flex:1; padding:9px 4px; border-radius:99px;
+  border:1px solid var(--fog-bd); background:none;
+  font-family:inherit; font-size:12px; font-weight:400;
+  color:var(--ink3); cursor:pointer; text-align:center; transition:all .15s;
+}
+.sint:hover         { background:var(--fog); color:var(--ink2); }
+.sint.on            { background:var(--accent); border-color:var(--accent); color:#fff; }
+.sint-now.on        { box-shadow:0 3px 12px rgba(110,142,216,.3); }
+.sint-shelf.on      { background:transparent; border-color:var(--ink4); color:var(--ink4); opacity:.55; }
+
+/* ══ Submit button ══ */
+.sdrop {
+  width:100%; margin-top:24px; padding:14px;
+  background:var(--accent); color:#fff; border:none;
+  border-radius:18px; font-family:inherit;
+  font-size:15px; font-weight:500; cursor:pointer;
+  transition:background .13s;
+  box-shadow:0 4px 18px rgba(110,142,216,.28);
+}
+.sdrop:hover  { background:var(--accent-d); }
+.sdrop:active { transform:scale(.99); }
