@@ -65,11 +65,11 @@ const mkIntent = (state = "LATER") => ({
 
 function makeSeed() {
   return rollover([
-    { id: uid(), title: "打電話給牙醫",    steps: [], due_date: todayStr(),             status: "active", auto_shifted: false, ...mkIntent("NOW")   },
-    { id: uid(), title: "整理產品需求文件", steps: [{ id: uid(), title: "讀完文件", is_completed: true }, { id: uid(), title: "寫回饋意見", is_completed: false }], due_date: todayStr(), status: "active", auto_shifted: false, ...mkIntent("SOON")  },
-    { id: uid(), title: "回覆信件",        steps: [], due_date: addDays(todayStr(), -1), status: "active", auto_shifted: false, ...mkIntent("SOON")  },
-    { id: uid(), title: "買菜",            steps: [{ id: uid(), title: "牛奶和雞蛋", is_completed: false }, { id: uid(), title: "蔬菜水果", is_completed: false }], due_date: todayStr(), status: "active", auto_shifted: false, ...mkIntent("LATER") },
-    { id: uid(), title: "完成簡報",        steps: [], due_date: todayStr(),             status: "active", auto_shifted: false, ...mkIntent("SHELF") },
+    { id: uid(), title: "打電話給牙醫",    steps: [], due_date: todayStr(),             status: "active", auto_shifted: false, ...mkIntent("NOW"),   progress_today: false, last_progress_at: null },
+    { id: uid(), title: "整理產品需求文件", steps: [{ id: uid(), title: "讀完文件", is_completed: true }, { id: uid(), title: "寫回饋意見", is_completed: false }], due_date: todayStr(), status: "active", auto_shifted: false, ...mkIntent("SOON"),  progress_today: true,  last_progress_at: Date.now() - 1000 * 60 * 30 },
+    { id: uid(), title: "回覆信件",        steps: [], due_date: addDays(todayStr(), -1), status: "active", auto_shifted: false, ...mkIntent("SOON"),  progress_today: false, last_progress_at: null },
+    { id: uid(), title: "買菜",            steps: [{ id: uid(), title: "牛奶和雞蛋", is_completed: false }, { id: uid(), title: "蔬菜水果", is_completed: false }], due_date: todayStr(), status: "active", auto_shifted: false, ...mkIntent("LATER"), progress_today: false, last_progress_at: null },
+    { id: uid(), title: "完成簡報",        steps: [], due_date: todayStr(),             status: "active", auto_shifted: false, ...mkIntent("SHELF"), progress_today: false, last_progress_at: null },
   ]);
 }
 
@@ -202,8 +202,8 @@ const authAdapter = IS_MOCK ? mockAuth : sbAuth;
 // ─────────────────────────────────────────────────────────────────
 const cacheKey  = userId => `easea_tasks_v3_${userId}`;
 const sbHeaders = (token, extra={}) => ({ apikey:SB_ANON, Authorization:`Bearer ${token||SB_ANON}`, "Content-Type":"application/json", ...extra });
-const fromDB    = r => ({ id:r.id, title:r.title, due_date:r.due_date, status:r.status, intent_state:r.intent_state??"LATER", intent_meta:r.intent_meta??{last_touch:null,reason:null}, auto_shifted:r.auto_shifted, steps:r.steps||[] });
-const toDB      = (t,uid) => ({ id:t.id, user_id:uid, title:t.title, due_date:t.due_date, status:t.status, intent_state:t.intent_state??"LATER", intent_meta:t.intent_meta??null, auto_shifted:t.auto_shifted, steps:t.steps, updated_at:new Date().toISOString() });
+const fromDB = r => ({ id:r.id, title:r.title, due_date:r.due_date, status:r.status, intent_state:r.intent_state??"LATER", intent_meta:r.intent_meta??{last_touch:null,reason:null}, auto_shifted:r.auto_shifted, steps:r.steps||[], progress_today:r.progress_today??false, last_progress_at:r.last_progress_at??null });
+const toDB   = (t,uid) => ({ id:t.id, user_id:uid, title:t.title, due_date:t.due_date, status:t.status, intent_state:t.intent_state??"LATER", intent_meta:t.intent_meta??null, auto_shifted:t.auto_shifted, steps:t.steps, progress_today:t.progress_today??false, last_progress_at:t.last_progress_at??null, updated_at:new Date().toISOString() });
 
 const tasksDB = {
   getLocal(userId)       { try { const r=localStorage.getItem(cacheKey(userId)); return r?rollover(JSON.parse(r)):null; } catch { return null; } },
@@ -342,32 +342,40 @@ function LoginPage() {
 }
 
 // ─────────────────────────────────────────────────────────────────
-//  § 8  TaskLine — floating line, depth-faded
+//  § 8  TaskLine — floating line, with progress_today support
 // ─────────────────────────────────────────────────────────────────
-function TaskLine({ task, index, onToggleDone, onToggleStep, onShiftIntent, onAddStep, onDelete, isLeaving }) {
-  const [open,   setOpen]   = useState(false);
-  const [adding, setAdding] = useState(false);
-  const [stepIn, setStepIn] = useState("");
+function TaskLine({ task, index, onToggleDone, onToggleStep, onShiftIntent, onMarkProgress, onAddStep, onDelete, isLeaving }) {
+  const [open,       setOpen]       = useState(false);
+  const [adding,     setAdding]     = useState(false);
+  const [stepIn,     setStepIn]     = useState("");
+  const [justMarked, setJustMarked] = useState(false);
 
-  const steps      = task.steps || [];
-  const doneSteps  = steps.filter(s=>s.is_completed).length;
-  const intent     = task.intent_state || "LATER";
-  const ui         = IntentUI[intent];
-  const isDone     = task.status === "done";
-  const canPromote = !!IntentMachine[intent]?.promote;
-  const canDemote  = !!IntentMachine[intent]?.demote;
+  const steps       = task.steps || [];
+  const intent      = task.intent_state || "LATER";
+  const ui          = IntentUI[intent];
+  const isDone      = task.status === "done";
+  const hasProgress = task.progress_today === true;
+  const canPromote  = !!IntentMachine[intent]?.promote;
+  const canDemote   = !!IntentMachine[intent]?.demote;
 
-  // Depth: first task = full opacity, each deeper fades — no blur, min 0.72
   const opacity = isDone ? 0.28 : Math.max(1 - index * 0.09, 0.72);
   const shiftY  = isDone ? 0    : index * 1.5;
 
   const doAdd = () => { if(stepIn.trim()){onAddStep(task.id,stepIn.trim());setStepIn("");setAdding(false);} };
+
+  const handleMarkProgress = () => {
+    if (hasProgress) return;
+    onMarkProgress(task.id);
+    setJustMarked(true);
+    setTimeout(() => setJustMarked(false), 2000);
+  };
 
   return (
     <div
       className={`tl${isDone?" tl-done":""}${isLeaving?" tl-leaving":""}`}
       style={{ opacity, transform:`translateY(${shiftY}px)` }}
     >
+      {/* Main row */}
       <div className="tl-row" onClick={()=>!isDone&&setOpen(o=>!o)}>
         <button
           className={`tl-check${isDone?" done":""}`}
@@ -376,9 +384,20 @@ function TaskLine({ task, index, onToggleDone, onToggleStep, onShiftIntent, onAd
           {isDone&&<TinyCheck/>}
         </button>
         <span className={`tl-title${isDone?" done":""}`}>{task.title}</span>
-        {!isDone&&<span className={`tl-dot tld-${intent.toLowerCase()}`} title={ui.hint}/>}
+
+        {/* Right indicator: progress dot (if marked) or intent dot */}
+        {!isDone && hasProgress
+          ? <span className={`progress-dot${justMarked?" just-marked":""}`} title="今天有前進一點" />
+          : !isDone && <span className={`tl-dot tld-${intent.toLowerCase()}`} title={ui.hint}/>
+        }
       </div>
 
+      {/* Soft whisper below title when progress marked — very low key */}
+      {hasProgress && !isDone && (
+        <p className="progress-whisper">今天有前進一點。</p>
+      )}
+
+      {/* Expanded drawer */}
       {open&&!isDone&&(
         <div className="tl-drawer">
           {steps.length>0&&(
@@ -403,13 +422,19 @@ function TaskLine({ task, index, onToggleDone, onToggleStep, onShiftIntent, onAd
               </div>
           }
           <div className="tl-actions">
+            {/* Progress button — disappears quietly once marked */}
+            {!hasProgress&&(
+              <button className="tl-act progress" onClick={handleMarkProgress}>
+                今天有碰過
+              </button>
+            )}
             <button className="tl-act promote" onClick={()=>onShiftIntent(task.id,"promote")} disabled={!canPromote}>
               ↑ {canPromote?IntentUI[IntentMachine[intent].promote].label:"—"}
             </button>
-            <button className="tl-act demote"  onClick={()=>onShiftIntent(task.id,"demote")}  disabled={!canDemote}>
+            <button className="tl-act demote" onClick={()=>onShiftIntent(task.id,"demote")} disabled={!canDemote}>
               ↓ {canDemote?IntentUI[IntentMachine[intent].demote].label:"—"}
             </button>
-            <button className="tl-act remove"  onClick={()=>onDelete(task.id)}>移除</button>
+            <button className="tl-act remove" onClick={()=>onDelete(task.id)}>移除</button>
           </div>
           <p className="tl-hint">{ui.hint}</p>
         </div>
@@ -482,7 +507,7 @@ function UserMenu({ onClose }) {
 // ─────────────────────────────────────────────────────────────────
 const SURFACE = 3;
 
-function TodayFlow({ tasks, onToggleDone, onToggleStep, onShiftIntent, onAddStep, onDelete }) {
+function TodayFlow({ tasks, onToggleDone, onToggleStep, onShiftIntent, onMarkProgress, onAddStep, onDelete }) {
   const t = todayStr();
   const [leaving,  setLeaving]  = useState(new Set());
   const [showRest, setShowRest] = useState(false);
@@ -511,7 +536,7 @@ function TodayFlow({ tasks, onToggleDone, onToggleStep, onShiftIntent, onAddStep
   const greet = hr<5?"深夜了。":hr<12?"早安。":hr<18?"午安。":"晚安。";
   const sub   = stream.length===0?"今天很輕。":stream.length===1?"一件一件就好。":stream.length<=3?"慢慢來。":"做不完沒關係。";
 
-  const h = { onToggleDone:handleDone, onToggleStep, onShiftIntent, onAddStep, onDelete };
+  const h = { onToggleDone:handleDone, onToggleStep, onShiftIntent, onMarkProgress, onAddStep, onDelete };
 
   return (
     <div className="ocean-view">
@@ -584,8 +609,9 @@ function AppShell() {
   },[push]);
 
   const handlers = {
-    onToggleDone:   useCallback(id=>mutate(id,t=>({...t,status:t.status==="done"?"active":"done"})),[mutate]),
-    onShiftIntent:  useCallback((id,action)=>{
+    onToggleDone:    useCallback(id=>mutate(id,t=>({...t,status:t.status==="done"?"active":"done"})),[mutate]),
+    onMarkProgress:  useCallback(id=>mutate(id,t=>({...t,progress_today:true,last_progress_at:Date.now()})),[mutate]),
+    onShiftIntent:   useCallback((id,action)=>{
       let changed;
       setTasks(ts=>ts.map(t=>{
         if(t.id!==id) return t;
@@ -595,7 +621,7 @@ function AppShell() {
       }));
       if(changed) push(changed);
     },[push]),
-    onToggleStep:   useCallback((tid,sid)=>{
+    onToggleStep:    useCallback((tid,sid)=>{
       let changed;
       setTasks(ts=>ts.map(t=>{
         if(t.id!==tid) return t;
@@ -605,12 +631,12 @@ function AppShell() {
       }));
       if(changed) push(changed);
     },[push]),
-    onAddStep:      useCallback((tid,title)=>{
+    onAddStep:       useCallback((tid,title)=>{
       let changed;
       setTasks(ts=>ts.map(t=>t.id===tid?(changed={...t,steps:[...t.steps,{id:uid(),title,is_completed:false}]}):t));
       if(changed) push(changed);
     },[push]),
-    onDelete:       useCallback(id=>{setTasks(ts=>ts.filter(t=>t.id!==id));del(id);},[del]),
+    onDelete:        useCallback(id=>{setTasks(ts=>ts.filter(t=>t.id!==id));del(id);},[del]),
   };
 
   return (
@@ -1114,6 +1140,47 @@ body {
 .lbtn:hover { background:var(--accent-d); }
 .lbtn:disabled { opacity:.5;cursor:not-allowed; }
 .ldemo { font-size:11px;color:var(--ink4);text-align:center;margin-top:14px;font-weight:400;letter-spacing:.02em; }
+
+/* ══ Today Progress System ══ */
+@keyframes progressGlow {
+  0%   { box-shadow:0 0 0 0 rgba(120,180,160,.5); }
+  60%  { box-shadow:0 0 0 7px rgba(120,180,160,.0); }
+  100% { box-shadow:0 0 0 0 rgba(120,180,160,.0); }
+}
+/* Replaces intent dot when progress_today=true */
+.progress-dot {
+  width:7px; height:7px; border-radius:50%;
+  flex-shrink:0;
+  background: rgba(100,175,148,.65);
+  transition: background .4s;
+}
+.progress-dot.just-marked {
+  animation: progressGlow 1.6s ease-out forwards;
+}
+/* Soft whisper line under title */
+.progress-whisper {
+  font-size:11px;
+  color:var(--ink4);
+  font-weight:400;
+  padding:0 0 4px 34px;
+  letter-spacing:.03em;
+  line-height:1;
+  transition: opacity .3s;
+}
+/* "今天有碰過" button — lowest key, no celebration */
+.tl-act.progress {
+  border-color: rgba(100,175,148,.35);
+  color: rgba(80,155,128,.8);
+}
+.tl-act.progress:hover {
+  background: rgba(100,175,148,.08);
+  border-color: rgba(100,175,148,.55);
+  color: rgba(70,145,118,.9);
+}
+[data-theme="dark"] .progress-dot { background:rgba(90,185,148,.55); }
+[data-theme="dark"] .progress-whisper { color:var(--ink4); }
+[data-theme="dark"] .tl-act.progress { border-color:rgba(90,185,148,.28); color:rgba(90,185,148,.7); }
+[data-theme="dark"] .tl-act.progress:hover { background:rgba(90,185,148,.10); border-color:rgba(90,185,148,.5); color:rgba(90,185,148,.9); }
 
 /* ══ Spinner ══ */
 .tide-spin { width:20px;height:20px;border-radius:50%;border:1.5px solid var(--fog-bd);border-top-color:var(--accent);animation:tideSpin .9s linear infinite; }
