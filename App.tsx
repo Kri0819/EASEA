@@ -10,6 +10,10 @@ import './styles/task.css';
 import './styles/login.css';
 import './styles/sheet.css';
 
+import { useTasks }         from './hooks/useTasks.js';
+import { useIntentFlow }    from './hooks/useIntentFlow.js';
+import { useTaskAnimation } from './hooks/useTaskAnimation.js';
+
 import {
   useState, useEffect, useCallback,
   useContext, createContext, useRef, useMemo,
@@ -598,40 +602,18 @@ function UserMenu({ onClose }) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-//  § 11  TodayFlow — ocean surface, max 3, depth fade, no done section
+//  § 11  TodayFlow — uses useIntentFlow + useTaskAnimation
 // ─────────────────────────────────────────────────────────────────
 const SURFACE = 3;
 
 function TodayFlow({ tasks, onToggleDone, onToggleStep, onShiftIntent, onMarkProgress, onAddStep, onDelete }) {
-  const t = todayStr();
-  const [leaving,  setLeaving]  = useState(new Set());
+  const today = todayStr();
   const [showRest, setShowRest] = useState(false);
 
-  const handleDone = useCallback(id => {
-    const task = tasks.find(tk=>tk.id===id);
-    if (task&&task.status!=="done") {
-      setLeaving(s=>new Set([...s,id]));
-      setTimeout(()=>{
-        onToggleDone(id);
-        setLeaving(s=>{const ns=new Set(s);ns.delete(id);return ns;});
-      }, 620);
-    } else { onToggleDone(id); }
-  },[tasks,onToggleDone]);
+  const { surface, rest, greet, sub } = useIntentFlow(tasks, today, flowScore);
+  const { leaving, handleDone }       = useTaskAnimation(tasks, onToggleDone);
 
-  const stream = useMemo(()=>tasks
-    .filter(tk=>tk.status!=="done"&&(tk.due_date===t||tk.auto_shifted))
-    .sort((a,b)=>flowScore(b)-flowScore(a)),
-    [tasks,t]
-  );
-
-  const surface = stream.slice(0, SURFACE);
-  const rest    = stream.slice(SURFACE);
-
-  const hr    = new Date().getHours();
-  const greet = hr<5?"深夜了。":hr<12?"早安。":hr<18?"午安。":"晚安。";
-  const sub   = stream.length===0?"今天很輕。":stream.length===1?"一件一件就好。":stream.length<=3?"慢慢來。":"做不完沒關係。";
-
-  const h = { onToggleDone:handleDone, onToggleStep, onShiftIntent, onMarkProgress, onAddStep, onDelete };
+  const h = { onToggleDone: handleDone, onToggleStep, onShiftIntent, onMarkProgress, onAddStep, onDelete };
 
   return (
     <div className="ocean-view">
@@ -641,7 +623,7 @@ function TodayFlow({ tasks, onToggleDone, onToggleStep, onShiftIntent, onMarkPro
       </div>
 
       <div className="ov-surface">
-        {stream.length===0&&(
+        {surface.length === 0 && rest.length === 0 && (
           <div className="ov-empty">
             <span className="ov-wave">🌊</span>
             <p className="ov-empty-title">今天空空的。</p>
@@ -649,17 +631,17 @@ function TodayFlow({ tasks, onToggleDone, onToggleStep, onShiftIntent, onMarkPro
           </div>
         )}
 
-        {surface.map((tk,i)=>(
-          <TaskLine key={tk.id} task={tk} index={i} isLeaving={leaving.has(tk.id)} {...h}/>
+        {surface.map((tk, i) => (
+          <TaskLine key={tk.id} task={tk} index={i} isLeaving={leaving.has(tk.id)} {...h} />
         ))}
 
-        {rest.length>0&&!showRest&&(
-          <button className="ov-more" onClick={()=>setShowRest(true)}>
+        {rest.length > 0 && !showRest && (
+          <button className="ov-more" onClick={() => setShowRest(true)}>
             還有 {rest.length} 件在後面
           </button>
         )}
-        {showRest&&rest.map((tk,i)=>(
-          <TaskLine key={tk.id} task={tk} index={SURFACE+i} isLeaving={leaving.has(tk.id)} {...h}/>
+        {showRest && rest.map((tk, i) => (
+          <TaskLine key={tk.id} task={tk} index={SURFACE + i} isLeaving={leaving.has(tk.id)} {...h} />
         ))}
       </div>
     </div>
@@ -667,7 +649,7 @@ function TodayFlow({ tasks, onToggleDone, onToggleStep, onShiftIntent, onMarkPro
 }
 
 // ─────────────────────────────────────────────────────────────────
-//  § 12  AppShell
+//  § 12  AppShell — uses useTasks
 // ─────────────────────────────────────────────────────────────────
 function AppShell() {
   const { session }             = useContext(AuthCtx);
@@ -675,92 +657,42 @@ function AppShell() {
   const token                   = session?.access_token;
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAdd,  setShowAdd]  = useState(false);
-  const [tasks,    setTasks]    = useState(()=>tasksDB.getLocal(userId)||makeSeed());
-  const [synced,   setSynced]   = useState(IS_MOCK);
 
-  useEffect(()=>{
-    if(IS_MOCK||!userId||!token) return;
-    tasksDB.fetchAll(userId,token)
-      .then(remote=>{const m=rollover(remote);setTasks(m);tasksDB.setLocal(userId,m);setSynced(true);})
-      .catch(()=>setSynced(true));
-  },[userId,token]);
-
-  useEffect(()=>{if(userId)tasksDB.setLocal(userId,tasks);},[tasks,userId]);
-
-  const push = useCallback(task=>{
-    if(IS_MOCK||!userId||!token) return;
-    tasksDB.upsert(task,userId,token).catch(()=>{});
-  },[userId,token]);
-
-  const del = useCallback(id=>{
-    if(IS_MOCK||!userId||!token) return;
-    tasksDB.remove(id,token).catch(()=>{});
-  },[userId,token]);
-
-  const mutate = useCallback((id,fn)=>{
-    let changed;
-    setTasks(ts=>ts.map(t=>t.id===id?(changed={...fn(t)}):t));
-    if(changed) push(changed);
-  },[push]);
-
-  const handlers = {
-    onToggleDone:    useCallback(id=>mutate(id,t=>({...t,status:t.status==="done"?"active":"done"})),[mutate]),
-    onMarkProgress:  useCallback(id=>mutate(id,t=>({...t,progress_today:true,last_progress_at:Date.now()})),[mutate]),
-    onShiftIntent:   useCallback((id,action)=>{
-      let changed;
-      setTasks(ts=>ts.map(t=>{
-        if(t.id!==id) return t;
-        const cur  = t.intent_state||"LATER";
-        const next = action==="promote"?IntentMachine[cur]?.promote:IntentMachine[cur]?.demote;
-        return (changed={...t,intent_state:next||cur,intent_meta:{...t.intent_meta,last_touch:Date.now()}});
-      }));
-      if(changed) push(changed);
-    },[push]),
-    onToggleStep:    useCallback((tid,sid)=>{
-      let changed;
-      setTasks(ts=>ts.map(t=>{
-        if(t.id!==tid) return t;
-        const steps=t.steps.map(s=>s.id===sid?{...s,is_completed:!s.is_completed}:s);
-        const all=steps.length>0&&steps.every(s=>s.is_completed);
-        return (changed={...t,steps,status:all?"done":t.status==="done"?"active":t.status});
-      }));
-      if(changed) push(changed);
-    },[push]),
-    onAddStep:       useCallback((tid,title)=>{
-      let changed;
-      setTasks(ts=>ts.map(t=>t.id===tid?(changed={...t,steps:[...t.steps,{id:uid(),title,is_completed:false}]}):t));
-      if(changed) push(changed);
-    },[push]),
-    onDelete:        useCallback(id=>{setTasks(ts=>ts.filter(t=>t.id!==id));del(id);},[del]),
-  };
+  const { tasks, synced, handlers, onAdd } = useTasks({
+    userId,
+    token,
+    tasksDB,
+    makeSeed,
+    rollover,
+    uid,
+    isMock: IS_MOCK,
+    IntentMachine,
+  });
 
   return (
     <div className="app-shell">
-      {/* Drifting background orbs */}
       <div className="bg-orb o1"/><div className="bg-orb o2"/><div className="bg-orb o3"/>
 
-      {/* Top bar */}
       <header className="topbar">
         <span className="tb-brand"><span className="tb-ea">Ea</span><span className="tb-sea">sea</span></span>
         <div className="tb-right">
-          {!IS_MOCK&&<div className={`sync-bead${synced?" on":""}`}/>}
-          <div style={{position:"relative"}}>
-            <button className="tb-avatar" onClick={()=>setMenuOpen(o=>!o)}>
-              {(session?.user?.email||"U")[0].toUpperCase()}
+          {!IS_MOCK && <div className={`sync-bead${synced ? " on" : ""}`}/>}
+          <div style={{ position: "relative" }}>
+            <button className="tb-avatar" onClick={() => setMenuOpen(o => !o)}>
+              {(session?.user?.email || "U")[0].toUpperCase()}
             </button>
-            {menuOpen&&<UserMenu onClose={()=>setMenuOpen(false)}/>}
+            {menuOpen && <UserMenu onClose={() => setMenuOpen(false)}/>}
           </div>
         </div>
       </header>
 
       <TodayFlow tasks={tasks} {...handlers}/>
 
-      {/* Buoy FAB */}
-      <button className="buoy" onClick={()=>setShowAdd(true)} aria-label="加一件事">
+      <button className="buoy" onClick={() => setShowAdd(true)} aria-label="加一件事">
         <PlusIco/>
       </button>
 
-      {showAdd&&<AddSheet onClose={()=>setShowAdd(false)} onAdd={task=>{setTasks(ts=>[...ts,task]);push(task);}}/>}
+      {showAdd && <AddSheet onClose={() => setShowAdd(false)} onAdd={onAdd}/>}
     </div>
   );
 }
