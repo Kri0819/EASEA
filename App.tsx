@@ -342,12 +342,126 @@ function LoginPage() {
 }
 
 // ─────────────────────────────────────────────────────────────────
-//  § 8  TaskLine — floating line, with progress_today support
+//  § 8a  ProgressIndicator
+//        Shows the dot + whisper when progress_today is true.
+//        Props: hasProgress, isDone, justMarked
+// ─────────────────────────────────────────────────────────────────
+function ProgressIndicator({ hasProgress, isDone, justMarked, intent, intentHint }) {
+  if (isDone) return null;
+  if (hasProgress) {
+    return (
+      <span
+        className={`progress-dot${justMarked ? " just-marked" : ""}`}
+        title="今天有前進一點"
+      />
+    );
+  }
+  return (
+    <span className={`tl-dot tld-${intent.toLowerCase()}`} title={intentHint} />
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  § 8b  TaskSteps
+//        Steps list + add-step input inside the drawer.
+//        Props: taskId, steps, onToggleStep, onAddStep
+// ─────────────────────────────────────────────────────────────────
+function TaskSteps({ taskId, steps, onToggleStep, onAddStep }) {
+  const [adding, setAdding] = useState(false);
+  const [stepIn, setStepIn] = useState("");
+
+  const doAdd = () => {
+    if (!stepIn.trim()) return;
+    onAddStep(taskId, stepIn.trim());
+    setStepIn("");
+    setAdding(false);
+  };
+
+  return (
+    <>
+      {steps.length > 0 && (
+        <div className="tl-steps">
+          {steps.map(s => (
+            <div className="tls-row" key={s.id}>
+              <button
+                className={`tls-check${s.is_completed ? " done" : ""}`}
+                onClick={() => onToggleStep(taskId, s.id)}
+              >
+                {s.is_completed && <TinyCheck size={7} />}
+              </button>
+              <span className={`tls-label${s.is_completed ? " done" : ""}`}>{s.title}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {!adding
+        ? <button className="tl-ghost" onClick={() => setAdding(true)}>+ 步驟</button>
+        : (
+          <div className="tl-addinput">
+            <input
+              autoFocus placeholder="步驟名稱…" value={stepIn}
+              onChange={e => setStepIn(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") doAdd(); if (e.key === "Escape") setAdding(false); }}
+            />
+            <button onClick={doAdd}>加</button>
+          </div>
+        )
+      }
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  § 8c  TaskActions
+//        Promote / demote / progress / remove buttons in drawer.
+//        Props: taskId, intent, hasProgress, onShiftIntent,
+//               onMarkProgress, onDelete, onJustMarked
+// ─────────────────────────────────────────────────────────────────
+function TaskActions({ taskId, intent, hasProgress, onShiftIntent, onMarkProgress, onDelete, onJustMarked }) {
+  const canPromote = !!IntentMachine[intent]?.promote;
+  const canDemote  = !!IntentMachine[intent]?.demote;
+
+  const handleMarkProgress = () => {
+    if (hasProgress) return;
+    onMarkProgress(taskId);
+    onJustMarked();
+  };
+
+  return (
+    <div className="tl-actions">
+      {!hasProgress && (
+        <button className="tl-act progress" onClick={handleMarkProgress}>
+          今天有碰過
+        </button>
+      )}
+      <button
+        className="tl-act promote"
+        onClick={() => onShiftIntent(taskId, "promote")}
+        disabled={!canPromote}
+      >
+        ↑ {canPromote ? IntentUI[IntentMachine[intent].promote].label : "—"}
+      </button>
+      <button
+        className="tl-act demote"
+        onClick={() => onShiftIntent(taskId, "demote")}
+        disabled={!canDemote}
+      >
+        ↓ {canDemote ? IntentUI[IntentMachine[intent].demote].label : "—"}
+      </button>
+      <button className="tl-act remove" onClick={() => onDelete(taskId)}>
+        移除
+      </button>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  § 8  TaskLine
+//       Orchestrates sub-components. Owns open/justMarked state.
+//       All animation, CSS classes, and props unchanged.
 // ─────────────────────────────────────────────────────────────────
 function TaskLine({ task, index, onToggleDone, onToggleStep, onShiftIntent, onMarkProgress, onAddStep, onDelete, isLeaving }) {
   const [open,       setOpen]       = useState(false);
-  const [adding,     setAdding]     = useState(false);
-  const [stepIn,     setStepIn]     = useState("");
   const [justMarked, setJustMarked] = useState(false);
 
   const steps       = task.steps || [];
@@ -355,87 +469,61 @@ function TaskLine({ task, index, onToggleDone, onToggleStep, onShiftIntent, onMa
   const ui          = IntentUI[intent];
   const isDone      = task.status === "done";
   const hasProgress = task.progress_today === true;
-  const canPromote  = !!IntentMachine[intent]?.promote;
-  const canDemote   = !!IntentMachine[intent]?.demote;
 
   const opacity = isDone ? 0.28 : Math.max(1 - index * 0.09, 0.72);
   const shiftY  = isDone ? 0    : index * 1.5;
 
-  const doAdd = () => { if(stepIn.trim()){onAddStep(task.id,stepIn.trim());setStepIn("");setAdding(false);} };
-
-  const handleMarkProgress = () => {
-    if (hasProgress) return;
-    onMarkProgress(task.id);
+  const handleJustMarked = () => {
     setJustMarked(true);
     setTimeout(() => setJustMarked(false), 2000);
   };
 
   return (
     <div
-      className={`tl${isDone?" tl-done":""}${isLeaving?" tl-leaving":""}`}
-      style={{ opacity, transform:`translateY(${shiftY}px)` }}
+      className={`tl${isDone ? " tl-done" : ""}${isLeaving ? " tl-leaving" : ""}`}
+      style={{ opacity, transform: `translateY(${shiftY}px)` }}
     >
       {/* Main row */}
-      <div className="tl-row" onClick={()=>!isDone&&setOpen(o=>!o)}>
+      <div className="tl-row" onClick={() => !isDone && setOpen(o => !o)}>
         <button
-          className={`tl-check${isDone?" done":""}`}
-          onClick={e=>{e.stopPropagation();onToggleDone(task.id);}}
+          className={`tl-check${isDone ? " done" : ""}`}
+          onClick={e => { e.stopPropagation(); onToggleDone(task.id); }}
         >
-          {isDone&&<TinyCheck/>}
+          {isDone && <TinyCheck />}
         </button>
-        <span className={`tl-title${isDone?" done":""}`}>{task.title}</span>
-
-        {/* Right indicator: progress dot (if marked) or intent dot */}
-        {!isDone && hasProgress
-          ? <span className={`progress-dot${justMarked?" just-marked":""}`} title="今天有前進一點" />
-          : !isDone && <span className={`tl-dot tld-${intent.toLowerCase()}`} title={ui.hint}/>
-        }
+        <span className={`tl-title${isDone ? " done" : ""}`}>{task.title}</span>
+        <ProgressIndicator
+          hasProgress={hasProgress}
+          isDone={isDone}
+          justMarked={justMarked}
+          intent={intent}
+          intentHint={ui.hint}
+        />
       </div>
 
-      {/* Soft whisper below title when progress marked — very low key */}
+      {/* Soft whisper — very low key */}
       {hasProgress && !isDone && (
         <p className="progress-whisper">今天有前進一點。</p>
       )}
 
       {/* Expanded drawer */}
-      {open&&!isDone&&(
+      {open && !isDone && (
         <div className="tl-drawer">
-          {steps.length>0&&(
-            <div className="tl-steps">
-              {steps.map(s=>(
-                <div className="tls-row" key={s.id}>
-                  <button className={`tls-check${s.is_completed?" done":""}`} onClick={()=>onToggleStep(task.id,s.id)}>
-                    {s.is_completed&&<TinyCheck size={7}/>}
-                  </button>
-                  <span className={`tls-label${s.is_completed?" done":""}`}>{s.title}</span>
-                </div>
-              ))}
-            </div>
-          )}
-          {!adding
-            ? <button className="tl-ghost" onClick={()=>setAdding(true)}>+ 步驟</button>
-            : <div className="tl-addinput">
-                <input autoFocus placeholder="步驟名稱…" value={stepIn}
-                  onChange={e=>setStepIn(e.target.value)}
-                  onKeyDown={e=>{if(e.key==="Enter")doAdd();if(e.key==="Escape")setAdding(false);}}/>
-                <button onClick={doAdd}>加</button>
-              </div>
-          }
-          <div className="tl-actions">
-            {/* Progress button — disappears quietly once marked */}
-            {!hasProgress&&(
-              <button className="tl-act progress" onClick={handleMarkProgress}>
-                今天有碰過
-              </button>
-            )}
-            <button className="tl-act promote" onClick={()=>onShiftIntent(task.id,"promote")} disabled={!canPromote}>
-              ↑ {canPromote?IntentUI[IntentMachine[intent].promote].label:"—"}
-            </button>
-            <button className="tl-act demote" onClick={()=>onShiftIntent(task.id,"demote")} disabled={!canDemote}>
-              ↓ {canDemote?IntentUI[IntentMachine[intent].demote].label:"—"}
-            </button>
-            <button className="tl-act remove" onClick={()=>onDelete(task.id)}>移除</button>
-          </div>
+          <TaskSteps
+            taskId={task.id}
+            steps={steps}
+            onToggleStep={onToggleStep}
+            onAddStep={onAddStep}
+          />
+          <TaskActions
+            taskId={task.id}
+            intent={intent}
+            hasProgress={hasProgress}
+            onShiftIntent={onShiftIntent}
+            onMarkProgress={onMarkProgress}
+            onDelete={onDelete}
+            onJustMarked={handleJustMarked}
+          />
           <p className="tl-hint">{ui.hint}</p>
         </div>
       )}
