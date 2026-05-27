@@ -23,16 +23,60 @@
 }
 
 /* ══ Logo ══ */
-.login-logo { display:flex; flex-direction:column; align-items:center; gap:14px; margin-bottom:8px; }
+.login-logo { display:flex; flex-direction:column; align-items:center; gap:16px; margin-bottom:10px; }
+
 .logo-sphere {
-  width:60px; height:60px; border-radius:50%;
-  background:radial-gradient(circle at 36% 32%, rgba(215,200,245,.95), rgba(160,195,235,.70) 55%, rgba(175,225,242,.50));
-  box-shadow:0 4px 28px rgba(140,165,235,.38), 0 0 0 1px rgba(255,255,255,.38) inset;
-  animation:sphereFl 5s ease-in-out infinite;
+  width:64px; height:64px; border-radius:50%;
+  position:relative;
+  /* Layered mist — deep ocean center, pale edge */
+  background:
+    radial-gradient(circle at 38% 35%,
+      rgba(230,225,255,.90) 0%,
+      rgba(175,195,242,.65) 30%,
+      rgba(130,165,228,.42) 62%,
+      rgba(90,130,205,.18) 100%
+    );
+  /* Outer glow ring — like moonlight on fog */
+  box-shadow:
+    0 0 0 1px  rgba(200,215,252,.35),
+    0 0 18px   rgba(160,185,240,.30),
+    0 0 40px   rgba(140,170,230,.16),
+    0 4px 24px rgba(110,145,215,.22);
+  /* Very slight blur softens the edge */
+  filter:blur(.4px);
+  animation:sphereFl 6s ease-in-out infinite;
+  overflow:hidden;
 }
-.logo-text { font-size:17px; font-weight:500; letter-spacing:.28em; }
-.lt-a { color:var(--ink2); }
-.lt-b { color:var(--accent); }
+
+/* Inner light points — like stars through fog */
+.logo-sphere::before,
+.logo-sphere::after {
+  content:'';
+  position:absolute;
+  border-radius:50%;
+  pointer-events:none;
+}
+/* Primary soft light */
+.logo-sphere::before {
+  width:10px; height:10px;
+  top:22%; left:28%;
+  background:radial-gradient(circle, rgba(255,255,255,.88) 0%, transparent 70%);
+  filter:blur(1.5px);
+}
+/* Secondary dim light */
+.logo-sphere::after {
+  width:5px; height:5px;
+  top:38%; left:52%;
+  background:radial-gradient(circle, rgba(255,255,255,.55) 0%, transparent 70%);
+  filter:blur(1px);
+}
+
+.logo-text {
+  font-size:15px; font-weight:500;
+  letter-spacing:.30em; color:var(--ink3);
+  opacity:.80;
+}
+.lt-b { color:var(--accent); opacity:1; }
 
 /* ══ Copy ══ */
 .login-title { font-size:18px; font-weight:600; color:var(--ink); margin-bottom:8px; letter-spacing:-.01em; }

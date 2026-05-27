@@ -3,13 +3,24 @@
 
 html,body { height:100%; }
 body {
-  background:var(--bg);
+  /* Layered fog gradient — top haze fades into bg naturally */
+  background:
+    radial-gradient(ellipse 120% 45% at 50% 0%, rgba(200,215,248,.38) 0%, transparent 70%),
+    radial-gradient(ellipse 80% 30% at 20% 0%, rgba(190,205,242,.22) 0%, transparent 55%),
+    var(--bg);
   font-family:'DM Sans','Noto Sans TC',system-ui,sans-serif;
   color:var(--ink);
   -webkit-font-smoothing:antialiased;
   -webkit-overflow-scrolling:touch;
   overflow-x:hidden;
   transition:background .4s, color .3s;
+}
+[data-theme="dark"] body,
+body[data-theme="dark"] {
+  background:
+    radial-gradient(ellipse 120% 45% at 50% 0%, rgba(40,70,140,.32) 0%, transparent 70%),
+    radial-gradient(ellipse 80% 30% at 20% 0%, rgba(30,55,120,.20) 0%, transparent 55%),
+    var(--bg);
 }
 
 /* ══ App shell ══ */
@@ -22,6 +33,33 @@ body {
   padding-bottom:120px;
 }
 
+/* ══ Top haze overlay — blends topbar into header seamlessly ══ */
+.app-shell::before {
+  content:'';
+  position:fixed;
+  top:0; left:50%; transform:translateX(-50%);
+  width:430px;
+  height:220px;
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(235,240,255,.72) 0%,
+      rgba(235,240,255,.40) 50%,
+      transparent 100%
+    );
+  pointer-events:none;
+  z-index:8;
+}
+[data-theme="dark"] .app-shell::before {
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(8,18,40,.68) 0%,
+      rgba(8,18,40,.30) 50%,
+      transparent 100%
+    );
+}
+
 /* ══ Background orbs ══ */
 .bg-orb {
   position:fixed;
@@ -30,49 +68,78 @@ body {
   z-index:0;
   filter:blur(70px);
 }
-.o1 { width:380px; height:380px; top:-90px;   left:-90px;  background:var(--orb1); animation:o1 24s ease-in-out infinite; }
-.o2 { width:300px; height:300px; top:28%;     right:-70px; background:var(--orb2); animation:o2 30s ease-in-out infinite; }
-.o3 { width:260px; height:260px; bottom:12%;  left:8%;     background:var(--orb3); animation:o3 21s ease-in-out infinite; }
+.o1 { width:380px; height:380px; top:-90px;  left:-90px;  background:var(--orb1); animation:o1 24s ease-in-out infinite; }
+.o2 { width:300px; height:300px; top:28%;    right:-70px; background:var(--orb2); animation:o2 30s ease-in-out infinite; }
+.o3 { width:260px; height:260px; bottom:12%; left:8%;     background:var(--orb3); animation:o3 21s ease-in-out infinite; }
 
-/* ══ Topbar ══ */
+/* ══ Topbar — floats in fog, no hard border ══ */
 .topbar {
   position:relative;
   z-index:10;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:20px 26px 0;
+  padding:24px 26px 0;
+  /* No background — sits inside the haze overlay */
 }
-.tb-brand { font-size:17px; font-weight:600; letter-spacing:-.022em; line-height:1; }
-.tb-ea    { color:var(--ink); }
-.tb-sea   { color:var(--accent); }
+.tb-brand {
+  font-size:15px;
+  font-weight:500;
+  letter-spacing:.08em;
+  line-height:1;
+  opacity:.65;        /* deliberately quiet — not a navbar */
+  transition:opacity .2s;
+}
+.tb-brand:hover { opacity:.9; }
+.tb-ea  { color:var(--ink2); }
+.tb-sea { color:var(--accent); }
 .tb-right { display:flex; align-items:center; gap:10px; }
 
-.sync-bead { width:5px; height:5px; border-radius:50%; background:var(--ink4); transition:background .4s; }
-.sync-bead.on { background:#52D68A; }
+.sync-bead { width:5px; height:5px; border-radius:50%; background:var(--ink4); transition:background .4s; opacity:.6; }
+.sync-bead.on { background:#52D68A; opacity:1; }
 
 .tb-avatar {
-  width:28px; height:28px; border-radius:50%;
-  background:var(--accent-s); border:1px solid var(--glass-bd);
-  font-size:11px; font-weight:600; color:var(--accent);
+  width:26px; height:26px; border-radius:50%;
+  background:transparent;
+  border:1px solid var(--glass-bd);
+  font-size:10.5px; font-weight:500; color:var(--ink3);
   cursor:pointer; display:flex; align-items:center; justify-content:center;
-  transition:all .2s;
+  transition:all .22s;
+  opacity:.7;
 }
-.tb-avatar:hover { background:var(--glass-str); transform:scale(1.08); }
+.tb-avatar:hover { opacity:1; background:var(--glass); border-color:var(--accent); color:var(--accent); }
 
 /* ══ Ocean view ══ */
 .ocean-view { position:relative; z-index:5; padding:0 26px; }
 
-.ov-header { padding:56px 0 0; }
-.ov-greet  { font-size:34px; font-weight:500; color:var(--ink); letter-spacing:-.02em; line-height:1.15; }
-.ov-sub    { font-size:14px; color:var(--ink3); margin-top:10px; font-weight:400; line-height:1.7; }
+/* Header — floats out of the fog above */
+.ov-header {
+  padding:44px 0 0;  /* reduced gap — topbar + header feel continuous */
+}
+.ov-greet {
+  font-size:34px;
+  font-weight:400;   /* slightly lighter — emerging from mist */
+  color:var(--ink);
+  letter-spacing:-.025em;
+  line-height:1.15;
+  /* Soft text shadow gives depth without hard edge */
+  text-shadow: 0 2px 24px rgba(140,165,220,.18);
+}
+.ov-sub {
+  font-size:14px;
+  color:var(--ink3);
+  margin-top:10px;
+  font-weight:400;
+  line-height:1.7;
+  opacity:.85;
+}
 
-.ov-surface { margin-top:48px; }
+.ov-surface { margin-top:44px; }
 
 /* ══ Empty state ══ */
 .ov-empty       { text-align:center; padding:60px 0 24px; }
 .ov-wave        { font-size:46px; display:inline-block; animation:buoyBob 4s ease-in-out infinite; }
-.ov-empty-title { font-size:19px; font-weight:500; color:var(--ink2); margin-top:14px; }
+.ov-empty-title { font-size:19px; font-weight:400; color:var(--ink2); margin-top:14px; }
 .ov-empty-sub   { font-size:13px; color:var(--ink3); margin-top:6px; font-weight:400; line-height:1.8; }
 
 /* ══ More button ══ */
@@ -85,32 +152,60 @@ body {
 }
 .ov-more:hover { color:var(--ink3); }
 
-/* ══ Buoy FAB ══ */
+/* ══ Buoy FAB — misty glow orb ══ */
 .buoy {
   position:fixed; bottom:34px; right:28px;
   width:52px; height:52px; border-radius:50%;
-  background:var(--glass);
-  backdrop-filter:blur(14px) saturate(1.5);
-  -webkit-backdrop-filter:blur(14px) saturate(1.5);
-  border:1px solid var(--glass-bd);
+  /* Mist orb: semi-transparent with inner light */
+  background:
+    radial-gradient(circle at 38% 36%,
+      rgba(180,200,248,.82) 0%,
+      rgba(130,160,230,.55) 55%,
+      rgba(100,130,210,.35) 100%
+    );
+  border:1px solid rgba(200,220,255,.45);
   color:var(--accent); cursor:pointer;
   display:flex; align-items:center; justify-content:center;
   z-index:100;
-  box-shadow:0 4px 20px rgba(100,130,220,.14), 0 0 0 1px rgba(255,255,255,.18) inset;
-  animation:buoyBob 3s ease-in-out infinite;
-  transition:background .2s, transform .15s;
+  box-shadow:
+    0 4px 24px rgba(110,140,220,.22),
+    0 0 0 6px rgba(160,185,240,.08),
+    0 0 0 1px rgba(255,255,255,.22) inset;
+  animation:buoyBob 3.5s ease-in-out infinite;
+  transition:background .3s, transform .15s, box-shadow .3s;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
 }
-.buoy:hover  { animation:none; background:var(--accent); color:#fff; transform:scale(1.1); box-shadow:0 8px 28px rgba(100,130,220,.3); }
+.buoy:hover {
+  animation:none;
+  background:
+    radial-gradient(circle at 38% 36%,
+      rgba(200,220,255,.92) 0%,
+      rgba(140,170,240,.75) 55%,
+      rgba(110,145,220,.55) 100%
+    );
+  transform:scale(1.1);
+  box-shadow:0 8px 32px rgba(110,140,220,.36), 0 0 0 8px rgba(160,185,240,.10);
+}
 .buoy:active { animation:none; transform:scale(.94); }
+
+[data-theme="dark"] .buoy {
+  background:
+    radial-gradient(circle at 38% 36%,
+      rgba(80,120,200,.72) 0%,
+      rgba(50,90,170,.50) 55%,
+      rgba(30,65,140,.32) 100%
+    );
+  border-color:rgba(80,120,200,.35);
+  box-shadow:0 4px 24px rgba(60,100,200,.28), 0 0 0 6px rgba(60,100,200,.08), 0 0 0 1px rgba(140,180,255,.15) inset;
+}
 
 /* ══ User menu ══ */
 .umenu {
   position:absolute; top:36px; right:0;
-  background:var(--glass);
-  backdrop-filter:blur(14px) saturate(1.5);
-  -webkit-backdrop-filter:blur(14px) saturate(1.5);
+  background:var(--glass-str);
   border:1px solid var(--glass-bd); border-radius:18px;
-  box-shadow:0 8px 32px rgba(8,18,40,.12);
+  box-shadow:0 8px 32px rgba(8,18,40,.10);
   padding:14px; min-width:200px; z-index:300;
   animation:fadeIn .13s;
 }
@@ -134,3 +229,4 @@ body {
 html { scroll-behavior:smooth; }
 ::-webkit-scrollbar { width:0; height:0; }
 * { scrollbar-width:none; }
+
