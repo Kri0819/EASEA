@@ -8,8 +8,9 @@ body {
     radial-gradient(ellipse 120% 45% at 50% 0%, rgba(200,215,248,.38) 0%, transparent 70%),
     radial-gradient(ellipse 80% 30% at 20% 0%, rgba(190,205,242,.22) 0%, transparent 55%),
     var(--bg);
-  font-family:'DM Sans','Noto Sans TC',system-ui,sans-serif;
-  color:var(--ink);
+  font-family:"Inter","SF Pro Text","Noto Sans TC",system-ui,sans-serif;
+  font-weight:470;
+  line-height:1.55;
   -webkit-font-smoothing:antialiased;
   -webkit-overflow-scrolling:touch;
   overflow-x:hidden;
@@ -118,20 +119,19 @@ body[data-theme="dark"] {
 }
 .ov-greet {
   font-size:34px;
-  font-weight:400;   /* slightly lighter — emerging from mist */
+  font-weight:650;
   color:var(--ink);
-  letter-spacing:-.025em;
+  letter-spacing:-.02em;
   line-height:1.15;
-  /* Soft text shadow gives depth without hard edge */
-  text-shadow: 0 2px 24px rgba(140,165,220,.18);
+  text-shadow:0 2px 24px rgba(140,165,220,.18);
 }
 .ov-sub {
-  font-size:14px;
+  font-size:14.5px;
   color:var(--ink3);
   margin-top:10px;
-  font-weight:400;
-  line-height:1.7;
-  opacity:.85;
+  font-weight:470;
+  line-height:1.65;
+  opacity:.90;
 }
 
 .ov-surface { margin-top:44px; }
@@ -139,8 +139,8 @@ body[data-theme="dark"] {
 /* ══ Empty state ══ */
 .ov-empty       { text-align:center; padding:60px 0 24px; }
 .ov-wave        { font-size:46px; display:inline-block; animation:buoyBob 4s ease-in-out infinite; }
-.ov-empty-title { font-size:19px; font-weight:400; color:var(--ink2); margin-top:14px; }
-.ov-empty-sub   { font-size:13px; color:var(--ink3); margin-top:6px; font-weight:400; line-height:1.8; }
+.ov-empty-title { font-size:19px; font-weight:580; color:var(--ink2); margin-top:14px; }
+.ov-empty-sub   { font-size:13.5px; color:var(--ink3); margin-top:6px; font-weight:430; line-height:1.75; }
 
 /* ══ More button ══ */
 .ov-more {

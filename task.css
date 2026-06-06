@@ -34,8 +34,8 @@
 .tl-check.done  { background:var(--accent); border-color:var(--accent); }
 
 /* Title */
-.tl-title      { flex:1; font-size:15.5px; font-weight:400; color:var(--ink); line-height:1.5; letter-spacing:-.005em; }
-.tl-title.done { text-decoration:line-through; color:var(--ink4); }
+.tl-title      { flex:1; font-size:16.5px; font-weight:500; color:var(--ink); line-height:1.48; letter-spacing:-.012em; }
+.tl-title.done { text-decoration:line-through; color:var(--ink4); font-weight:470; }
 
 /* Intent dot */
 .tl-dot    { width:6px; height:6px; border-radius:50%; flex-shrink:0; transition:all .3s; }
@@ -66,7 +66,7 @@
 .tls-check:hover { border-color:var(--accent); }
 .tls-check.done  { background:var(--accent); border-color:var(--accent); }
 
-.tls-label      { font-size:13px; color:var(--ink2); flex:1; font-weight:400; }
+.tls-label      { font-size:13.5px; color:var(--ink2); flex:1; font-weight:430; line-height:1.5; }
 .tls-label.done { text-decoration:line-through; color:var(--ink4); }
 
 /* Add step */
@@ -96,8 +96,8 @@
 .tl-actions { display:flex; gap:7px; margin-top:12px; }
 .tl-act {
   background:none; border:1px solid var(--fog-bd);
-  border-radius:99px; padding:4px 13px;
-  font-family:inherit; font-size:11.5px; color:var(--ink3);
+  border-radius:99px; padding:5px 14px;
+  font-family:inherit; font-size:12px; font-weight:500; color:var(--ink3);
   cursor:pointer; transition:all .14s;
 }
 .tl-act:hover:not(:disabled) { background:var(--fog); color:var(--ink2); }
@@ -105,7 +105,7 @@
 .tl-act.promote:not(:disabled):hover { border-color:var(--accent); color:var(--accent); }
 .tl-act.remove:hover { color:#A85050; border-color:rgba(168,80,80,.3); }
 
-.tl-hint { font-size:10.5px; color:var(--ink3); margin-top:8px; font-weight:400; letter-spacing:.03em; }
+.tl-hint { font-size:11px; color:var(--ink3); margin-top:8px; font-weight:430; letter-spacing:.02em; opacity:.75; }
 
 /* ══ Progress system ══ */
 .progress-dot {
@@ -117,9 +117,10 @@
 .progress-dot.just-marked { animation:progressGlow 1.6s ease-out forwards; }
 
 .progress-whisper {
-  font-size:11px; color:var(--ink4); font-weight:400;
+  font-size:11.5px; color:var(--ink3); font-weight:430;
   padding:0 0 4px 34px;
-  letter-spacing:.03em; line-height:1;
+  letter-spacing:.02em; line-height:1.2;
+  opacity:.70;
   transition:opacity .3s;
 }
 

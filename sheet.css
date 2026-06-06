@@ -28,7 +28,7 @@
 
 /* ══ Hint text ══ */
 .swhisper {
-  font-size:13px; color:var(--ink3); font-weight:400;
+  font-size:13.5px; color:var(--ink3); font-weight:470;
   text-align:center; margin-bottom:22px;
   letter-spacing:.01em; line-height:1.6;
 }
@@ -38,19 +38,19 @@
   width:100%; border:none;
   border-bottom:2px solid var(--glass-bd);
   background:transparent; padding:12px 0;
-  font-family:inherit; font-size:18px; font-weight:400;
+  font-family:inherit; font-size:19px; font-weight:500;
   color:var(--ink); outline:none;
   transition:border-color .15s; line-height:1.4;
 }
-.sfield:focus       { border-color:var(--accent); }
-.sfield::placeholder { color:var(--ink4); }
+.sfield:focus        { border-color:var(--accent); }
+.sfield::placeholder { color:var(--ink4); font-weight:430; }
 
 /* ══ Intent chips ══ */
 .sintents { display:flex; gap:8px; margin-top:22px; }
 .sint {
   flex:1; padding:9px 4px; border-radius:99px;
   border:1px solid var(--fog-bd); background:none;
-  font-family:inherit; font-size:12px; font-weight:400;
+  font-family:inherit; font-size:12.5px; font-weight:500;
   color:var(--ink3); cursor:pointer; text-align:center; transition:all .15s;
 }
 .sint:hover         { background:var(--fog); color:var(--ink2); }
@@ -63,8 +63,8 @@
   width:100%; margin-top:24px; padding:14px;
   background:var(--accent); color:#fff; border:none;
   border-radius:18px; font-family:inherit;
-  font-size:15px; font-weight:500; cursor:pointer;
-  transition:background .13s;
+  font-size:15.5px; font-weight:600; letter-spacing:.01em;
+  cursor:pointer; transition:background .13s;
   box-shadow:0 4px 18px rgba(110,142,216,.28);
 }
 .sdrop:hover  { background:var(--accent-d); }
