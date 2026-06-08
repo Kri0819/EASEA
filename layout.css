@@ -34,29 +34,30 @@ body[data-theme="dark"] {
   padding-bottom:120px;
 }
 
-/* ══ Top haze overlay — blends topbar into header seamlessly ══ */
+/* ══ Top haze overlay — softer, less opaque ══ */
 .app-shell::before {
   content:'';
   position:fixed;
   top:0; left:50%; transform:translateX(-50%);
   width:430px;
-  height:220px;
+  height:180px;
   background:
     linear-gradient(
       to bottom,
-      rgba(235,240,255,.72) 0%,
-      rgba(235,240,255,.40) 50%,
+      rgba(235,240,255,.52) 0%,
+      rgba(235,240,255,.22) 55%,
       transparent 100%
     );
   pointer-events:none;
   z-index:8;
 }
-[data-theme="dark"] .app-shell::before {
+[data-theme="dark"] .app-shell::before,
+body[data-theme="dark"] .app-shell::before {
   background:
     linear-gradient(
       to bottom,
-      rgba(8,18,40,.68) 0%,
-      rgba(8,18,40,.30) 50%,
+      rgba(8,18,38,.50) 0%,
+      rgba(8,18,38,.18) 55%,
       transparent 100%
     );
 }

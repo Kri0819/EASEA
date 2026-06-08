@@ -1,17 +1,4 @@
 /* ══ Task line ══ */
-.tl {
-  transition:
-    opacity   .55s cubic-bezier(.22,1,.36,1),
-    filter    .55s cubic-bezier(.22,1,.36,1),
-    transform .55s cubic-bezier(.22,1,.36,1);
-  animation:fadeIn .3s ease both;
-}
-.tl-leaving {
-  animation:dissolve .62s cubic-bezier(.4,0,.8,1) forwards !important;
-  pointer-events:none;
-}
-.tl-done { pointer-events:none; }
-
 .tl-row {
   display:flex; align-items:center; gap:14px;
   padding:15px 0;
@@ -20,7 +7,32 @@
   -webkit-tap-highlight-color:transparent;
   transition:opacity .14s;
 }
-.tl-row:active { opacity:.7; }
+.tl-row:active { opacity:.75; }
+
+/* Subtle surface behind each task line */
+.tl {
+  transition:
+    opacity   .55s cubic-bezier(.22,1,.36,1),
+    filter    .55s cubic-bezier(.22,1,.36,1),
+    transform .55s cubic-bezier(.22,1,.36,1);
+  animation:fadeIn .3s ease both;
+  background:rgba(255,255,255,.45);
+  border-radius:12px;
+  margin-bottom:3px;
+  padding:0 12px;
+}
+[data-theme="dark"] .tl,
+body[data-theme="dark"] .tl {
+  background:rgba(20,38,62,.52);
+}
+.tl-leaving {
+  animation:dissolve .62s cubic-bezier(.4,0,.8,1) forwards !important;
+  pointer-events:none;
+}
+.tl-done {
+  pointer-events:none;
+  background:transparent;
+}
 
 /* Checkbox */
 .tl-check {
