@@ -1,0 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600&display=swap');
+
+/* ══ Tokens — Light ══ */
+:root {
+  --bg:         #EBF0FA;
+  --surface:    #FFFFFF;
+  --glass:      rgba(255,255,255,.82);
+  --glass-str:  rgba(255,255,255,.96);
+  --glass-bd:   rgba(190,210,245,.65);
+  --fog:        rgba(248,250,255,.90);
+  --fog-bd:     rgba(185,205,240,.50);
+
+  --ink:        #1C2A3E;
+  --ink2:       #3D5070;
+  --ink3:       #6880A0;
+  --ink4:       #A8BDD4;
+
+  --orb1:       rgba(180,198,238,.38);
+  --orb2:       rgba(210,188,230,.30);
+  --orb3:       rgba(162,212,234,.28);
+
+  --accent:     #5B82D4;
+  --accent-d:   #4468C0;
+  --accent-s:   rgba(91,130,212,.10);
+}
+
+/* ══ Tokens — Dark ══ */
+:root[data-theme="dark"],
+body[data-theme="dark"] {
+  --bg:         #08121C;
+  --surface:    #0F1E30;
+  --glass:      rgba(15,30,50,.88);
+  --glass-str:  rgba(20,38,62,.97);
+  --glass-bd:   rgba(55,90,140,.60);
+  --fog:        rgba(12,24,42,.92);
+  --fog-bd:     rgba(45,78,118,.55);
+
+  --ink:        #D8EAF8;
+  --ink2:       #90B0CC;
+  --ink3:       #5A7898;
+  --ink4:       #304860;
+
+  --orb1:       rgba(40,72,158,.42);
+  --orb2:       rgba(68,42,118,.36);
+  --orb3:       rgba(24,70,128,.38);
+
+  --accent:     #6098E8;
+  --accent-d:   #4478D4;
+  --accent-s:   rgba(96,152,232,.14);
+}

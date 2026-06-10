@@ -1,0 +1,144 @@
+/* ══ Login ocean wrapper ══ */
+.login-ocean {
+  min-height:100vh; position:relative;
+  display:flex; align-items:center; justify-content:center;
+  padding:32px 24px; overflow:hidden;
+  background:var(--bg);
+}
+
+/* Background orbs (login-specific sizes) */
+.l-orb { position:absolute; border-radius:50%; pointer-events:none; filter:blur(80px); }
+.l-orb1 { width:440px; height:440px; top:-110px;  left:-110px; background:var(--orb1); animation:o1 22s ease-in-out infinite; }
+.l-orb2 { width:340px; height:340px; bottom:-70px; right:-90px; background:var(--orb2); animation:o2 28s ease-in-out infinite; }
+.l-orb3 { width:280px; height:280px; top:30%;      left:15%;    background:var(--orb3); animation:o3 19s ease-in-out infinite; }
+
+/* ══ Glass card ══ */
+.login-glass {
+  position:relative; z-index:10;
+  background:var(--glass-str);
+  border:1px solid var(--glass-bd);
+  border-radius:32px; padding:48px 34px;
+  width:100%; max-width:360px;
+  box-shadow:0 16px 48px rgba(7,18,34,.10), 0 1px 0 rgba(255,255,255,.5) inset;
+}
+
+/* ══ Logo ══ */
+.login-logo { display:flex; flex-direction:column; align-items:center; gap:16px; margin-bottom:10px; }
+
+.logo-sphere {
+  width:64px; height:64px; border-radius:50%;
+  position:relative;
+  /* Layered mist — deep ocean center, pale edge */
+  background:
+    radial-gradient(circle at 38% 35%,
+      rgba(230,225,255,.90) 0%,
+      rgba(175,195,242,.65) 30%,
+      rgba(130,165,228,.42) 62%,
+      rgba(90,130,205,.18) 100%
+    );
+  /* Outer glow ring — like moonlight on fog */
+  box-shadow:
+    0 0 0 1px  rgba(200,215,252,.35),
+    0 0 18px   rgba(160,185,240,.30),
+    0 0 40px   rgba(140,170,230,.16),
+    0 4px 24px rgba(110,145,215,.22);
+  /* Very slight blur softens the edge */
+  filter:blur(.4px);
+  animation:sphereFl 6s ease-in-out infinite;
+  overflow:hidden;
+}
+
+/* Inner light points — like stars through fog */
+.logo-sphere::before,
+.logo-sphere::after {
+  content:'';
+  position:absolute;
+  border-radius:50%;
+  pointer-events:none;
+}
+/* Primary soft light */
+.logo-sphere::before {
+  width:10px; height:10px;
+  top:22%; left:28%;
+  background:radial-gradient(circle, rgba(255,255,255,.88) 0%, transparent 70%);
+  filter:blur(1.5px);
+}
+/* Secondary dim light */
+.logo-sphere::after {
+  width:5px; height:5px;
+  top:38%; left:52%;
+  background:radial-gradient(circle, rgba(255,255,255,.55) 0%, transparent 70%);
+  filter:blur(1px);
+}
+
+.logo-text {
+  font-size:15px; font-weight:500;
+  letter-spacing:.30em; color:var(--ink3);
+  opacity:.80;
+}
+.lt-b { color:var(--accent); opacity:1; }
+
+/* ══ Copy ══ */
+.login-title {
+  font-size:22px;
+  font-weight:650;
+  color:var(--ink);
+  margin-bottom:8px;
+  letter-spacing:-.02em;
+  line-height:1.25;
+}
+.login-tag {
+  font-size:14px;
+  color:var(--ink2);
+  font-weight:470;
+  line-height:1.65;
+  margin-bottom:26px;
+}
+
+/* ══ Sent state ══ */
+.login-sent  { text-align:center; padding:8px 0 4px; }
+.sent-icon   { font-size:44px; margin-bottom:16px; display:block; }
+.sent-title  { font-size:20px; font-weight:650; color:var(--ink); margin-bottom:10px; letter-spacing:-.015em; }
+.sent-sub    { font-size:14px; color:var(--ink2); font-weight:470; line-height:1.7; margin-bottom:24px; }
+.sent-sub strong { color:var(--ink); font-weight:600; }
+
+/* ══ Messages ══ */
+.lmsg     { font-size:13px; padding:9px 13px; border-radius:12px; margin-bottom:13px; border:1px solid transparent; line-height:1.5; font-weight:470; }
+.lmsg.err { background:rgba(210,90,90,.10);  color:#B05050; border-color:rgba(210,90,90,.25); }
+.lmsg.ok  { background:rgba(70,175,110,.10); color:#38905A; border-color:rgba(70,175,110,.25); }
+
+/* ══ Form inputs ══ */
+.linput {
+  display:block; width:100%;
+  border:none; border-bottom:1.5px solid var(--fog-bd);
+  background:transparent; padding:12px 0; margin-bottom:16px;
+  font-family:inherit; font-size:15px; font-weight:470;
+  color:var(--ink); outline:none;
+  transition:border-color .14s;
+}
+.linput:focus        { border-color:var(--accent); }
+.linput::placeholder { color:var(--ink4); font-weight:430; }
+
+/* ══ Buttons ══ */
+.lbtn {
+  width:100%; padding:14px; margin-top:6px;
+  background:var(--accent); color:#fff; border:none;
+  border-radius:18px; font-family:inherit;
+  font-size:15.5px; font-weight:600; letter-spacing:.01em;
+  cursor:pointer; transition:background .13s;
+  box-shadow:0 4px 18px rgba(110,142,216,.28);
+}
+.lbtn:hover    { background:var(--accent-d); }
+.lbtn:disabled { opacity:.5; cursor:not-allowed; }
+
+.lbtn-ghost {
+  width:100%; padding:12px; margin-top:4px;
+  background:none; color:var(--ink3);
+  border:1.5px solid var(--glass-bd);
+  border-radius:16px; font-family:inherit;
+  font-size:14.5px; font-weight:500; cursor:pointer;
+  transition:all .14s;
+}
+.lbtn-ghost:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-s); }
+
+.ldemo { font-size:11.5px; color:var(--ink4); text-align:center; margin-top:14px; font-weight:430; letter-spacing:.02em; }
