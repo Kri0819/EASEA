@@ -17,19 +17,16 @@ body[data-theme="dark"] .tl { background:transparent; }
   pointer-events:none;
 }
 .tl-done { pointer-events:none; background:transparent; }
-
+ 
 .tl-row {
   display:flex; align-items:center; gap:14px;
   padding:16px 2px;
-  border-bottom:1px solid rgba(185,205,240,.12);
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
   transition:opacity .14s;
 }
-[data-theme="dark"] .tl-row,
-body[data-theme="dark"] .tl-row { border-bottom-color:rgba(45,78,118,.14); }
 .tl-row:active { opacity:.75; }
-
+ 
 /* Checkbox */
 .tl-check {
   width:20px; height:20px; border-radius:50%;
@@ -40,31 +37,30 @@ body[data-theme="dark"] .tl-row { border-bottom-color:rgba(45,78,118,.14); }
 }
 .tl-check:hover { border-color:var(--accent); background:var(--accent-s); }
 .tl-check.done  { background:var(--accent); border-color:var(--accent); }
-
+ 
 /* Title */
 .tl-title      { flex:1; font-size:16.5px; font-weight:500; color:var(--ink); line-height:1.48; letter-spacing:-.012em; }
 .tl-title.done { text-decoration:line-through; color:var(--ink4); font-weight:470; }
-
+ 
 /* Intent dot */
 .tl-dot    { width:6px; height:6px; border-radius:50%; flex-shrink:0; transition:all .3s; }
 .tld-now   { background:var(--accent); opacity:.88; box-shadow:0 0 6px rgba(110,142,216,.55); }
 .tld-soon  { background:var(--accent); opacity:.45; }
 .tld-later { background:var(--ink4);   opacity:.45; }
 .tld-shelf { background:var(--ink4);   opacity:.15; }
-
+ 
 /* ══ Drawer ══ */
 .tl-drawer {
   padding:10px 0 14px 34px;
-  border-bottom:1px solid var(--fog-bd);
   animation:drawerIn .2s ease both;
 }
-
+ 
 /* Steps */
 .tl-steps { margin-bottom:8px; }
-
+ 
 .tls-row { display:flex; align-items:center; gap:10px; padding:5px 0; border-bottom:1px solid rgba(200,215,245,.18); }
 .tls-row:last-child { border-bottom:none; }
-
+ 
 .tls-check {
   width:14px; height:14px; border-radius:3px;
   border:1px solid var(--ink4);
@@ -73,10 +69,10 @@ body[data-theme="dark"] .tl-row { border-bottom-color:rgba(45,78,118,.14); }
 }
 .tls-check:hover { border-color:var(--accent); }
 .tls-check.done  { background:var(--accent); border-color:var(--accent); }
-
+ 
 .tls-label      { font-size:13.5px; color:var(--ink2); flex:1; font-weight:430; line-height:1.5; }
 .tls-label.done { text-decoration:line-through; color:var(--ink4); }
-
+ 
 /* Add step */
 .tl-ghost {
   background:none; border:none; cursor:pointer;
@@ -84,7 +80,7 @@ body[data-theme="dark"] .tl-row { border-bottom-color:rgba(45,78,118,.14); }
   font-family:inherit; padding:6px 0 2px; display:block; transition:color .12s;
 }
 .tl-ghost:hover { color:var(--ink3); }
-
+ 
 .tl-addinput { display:flex; gap:6px; margin-top:6px; }
 .tl-addinput input {
   flex:1; border:none; border-bottom:1px solid var(--fog-bd);
@@ -99,7 +95,7 @@ body[data-theme="dark"] .tl-row { border-bottom-color:rgba(45,78,118,.14); }
   transition:background .13s;
 }
 .tl-addinput button:hover { background:var(--accent-d); }
-
+ 
 /* Actions */
 .tl-actions { display:flex; gap:7px; margin-top:12px; }
 .tl-act {
@@ -112,9 +108,9 @@ body[data-theme="dark"] .tl-row { border-bottom-color:rgba(45,78,118,.14); }
 .tl-act:disabled { opacity:.2; cursor:default; }
 .tl-act.promote:not(:disabled):hover { border-color:var(--accent); color:var(--accent); }
 .tl-act.remove:hover { color:#A85050; border-color:rgba(168,80,80,.3); }
-
+ 
 .tl-hint { font-size:11px; color:var(--ink3); margin-top:8px; font-weight:430; letter-spacing:.02em; opacity:.75; }
-
+ 
 /* ══ Progress system ══ */
 .progress-dot {
   width:7px; height:7px; border-radius:50%;
@@ -123,22 +119,25 @@ body[data-theme="dark"] .tl-row { border-bottom-color:rgba(45,78,118,.14); }
   transition:background .4s;
 }
 .progress-dot.just-marked { animation:progressGlow 1.6s ease-out forwards; }
-
+ 
 .progress-whisper {
-  font-size:11.5px; color:var(--ink3); font-weight:430;
-  padding:0 0 4px 34px;
-  letter-spacing:.02em; line-height:1.2;
+  font-size:11px; color:var(--ink3); font-weight:430;
+  padding:5px 0 6px 34px;
+  letter-spacing:.02em; line-height:1.4;
+  opacity:.65;
+  transition:opacity .3s;
+}
   opacity:.70;
   transition:opacity .3s;
 }
-
+ 
 .tl-act.progress { border-color:rgba(100,175,148,.35); color:rgba(80,155,128,.8); }
 .tl-act.progress:hover {
   background:rgba(100,175,148,.08);
   border-color:rgba(100,175,148,.55);
   color:rgba(70,145,118,.9);
 }
-
+ 
 [data-theme="dark"] .progress-dot    { background:rgba(90,185,148,.55); }
 [data-theme="dark"] .progress-whisper { color:var(--ink4); }
 [data-theme="dark"] .tl-act.progress { border-color:rgba(90,185,148,.28); color:rgba(90,185,148,.7); }
