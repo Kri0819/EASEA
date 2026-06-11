@@ -674,7 +674,12 @@ function AppShell() {
       <div className="bg-orb o1"/><div className="bg-orb o2"/><div className="bg-orb o3"/>
 
       <header className="topbar">
-        <span className="tb-brand"><span className="tb-ea">Ea</span><span className="tb-sea">sea</span></span>
+        <span className="tb-brand">
+          <span className="tb-orb" />
+          <span className="tb-wordmark">
+            <span className="tb-ea">Ea</span><span className="tb-sea">sea</span>
+          </span>
+        </span>
         <div className="tb-right">
           {!IS_MOCK && <div className={`sync-bead${synced ? " on" : ""}`}/>}
           <div style={{ position: "relative" }}>
