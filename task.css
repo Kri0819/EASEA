@@ -1,38 +1,38 @@
-/* ══ Task line ══ */
-.tl-row {
-  display:flex; align-items:center; gap:14px;
-  padding:15px 0;
-  border-bottom:1px solid var(--fog-bd);
-  cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
-  transition:opacity .14s;
-}
-.tl-row:active { opacity:.75; }
-
-/* Subtle surface behind each task line */
+/* ══ Task line — no card, pure floating ══ */
 .tl {
   transition:
     opacity   .55s cubic-bezier(.22,1,.36,1),
     filter    .55s cubic-bezier(.22,1,.36,1),
     transform .55s cubic-bezier(.22,1,.36,1);
   animation:fadeIn .3s ease both;
-  background:rgba(255,255,255,.45);
-  border-radius:12px;
-  margin-bottom:3px;
-  padding:0 12px;
+  background:transparent;
+  border-radius:0;
+  margin-bottom:0;
+  padding:0;
 }
 [data-theme="dark"] .tl,
-body[data-theme="dark"] .tl {
-  background:rgba(20,38,62,.52);
-}
+body[data-theme="dark"] .tl { background:transparent; }
 .tl-leaving {
   animation:dissolve .62s cubic-bezier(.4,0,.8,1) forwards !important;
   pointer-events:none;
 }
-.tl-done {
-  pointer-events:none;
-  background:transparent;
+.tl-done { pointer-events:none; background:transparent; }
+
+.tl-row {
+  display:flex; align-items:center; gap:14px;
+  padding:16px 2px;
+  border-bottom:1px solid rgba(185,205,240,.12);
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:opacity .14s;
 }
+/* tl-row border when followed by progress-whisper — even softer */
+.tl:has(.progress-whisper) .tl-row {
+  border-bottom-color: rgba(185,205,240,.06);
+}
+[data-theme="dark"] .tl-row,
+body[data-theme="dark"] .tl-row { border-bottom-color:rgba(45,78,118,.14); }
+.tl-row:active { opacity:.75; }
 
 /* Checkbox */
 .tl-check {
@@ -129,9 +129,12 @@ body[data-theme="dark"] .tl {
 .progress-dot.just-marked { animation:progressGlow 1.6s ease-out forwards; }
 
 .progress-whisper {
-  font-size:11.5px; color:var(--ink3); font-weight:430;
-  padding:0 0 4px 34px;
-  letter-spacing:.02em; line-height:1.2;
+  font-size:11px; color:var(--ink3); font-weight:430;
+  padding:5px 0 6px 34px;
+  letter-spacing:.02em; line-height:1.4;
+  opacity:.65;
+  transition:opacity .3s;
+}
   opacity:.70;
   transition:opacity .3s;
 }
