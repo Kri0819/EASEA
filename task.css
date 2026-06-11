@@ -21,17 +21,10 @@ body[data-theme="dark"] .tl { background:transparent; }
 .tl-row {
   display:flex; align-items:center; gap:14px;
   padding:16px 2px;
-  border-bottom:1px solid rgba(185,205,240,.12);
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
   transition:opacity .14s;
 }
-/* tl-row border when followed by progress-whisper — even softer */
-.tl:has(.progress-whisper) .tl-row {
-  border-bottom-color: rgba(185,205,240,.06);
-}
-[data-theme="dark"] .tl-row,
-body[data-theme="dark"] .tl-row { border-bottom-color:rgba(45,78,118,.14); }
 .tl-row:active { opacity:.75; }
 
 /* Checkbox */
