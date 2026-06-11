@@ -89,8 +89,8 @@ export function useTasks({ userId, token, tasksDB, makeSeed, rollover, uid, isMo
     setTasks(ts => ts.map(t => {
       if (t.id !== tid) return t;
       const steps = t.steps.map(s => s.id === sid ? { ...s, is_completed: !s.is_completed } : s);
-      const all   = steps.length > 0 && steps.every(s => s.is_completed);
-      return (changed = { ...t, steps, status: all ? 'done' : t.status === 'done' ? 'active' : t.status });
+      // Never auto-complete the task — only the main checkbox can do that
+      return (changed = { ...t, steps });
     }));
     if (changed) push(changed);
   }, [push]);
