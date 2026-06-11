@@ -85,20 +85,31 @@ function makeSeed() {
 }
 
 // ─────────────────────────────────────────────────────────────────
-//  § 3  Auth adapter — Google OAuth via Supabase
+//  § 3  Auth adapter — Magic Link (OTP)
 // ─────────────────────────────────────────────────────────────────
 const SESSION_KEY = "easea_session_v3";
 
-// ── Mock: demo mode, skip OAuth ──
+// ── Mock: simulate magic link in demo mode ──
+// In mock mode we skip the actual email and just set the session directly
 const mockAuth = {
-  async signInWithGoogle() {
-    await sleep(500);
-    const session = {
-      user: { id: "demo-user-001", email: "demo@easea.app", name: "Demo User" },
-      access_token: uid(),
-    };
+  async sendOtp(email) {
+    await sleep(600);
+    // Auto-create user and session (demo shortcut — real Supabase sends email)
+    const k = email.toLowerCase().trim();
+    const id = (() => {
+      try {
+        const stored = JSON.parse(localStorage.getItem("easea_mock_users") || "{}");
+        if (stored[k]) return stored[k];
+        const newId = uid();
+        stored[k] = newId;
+        localStorage.setItem("easea_mock_users", JSON.stringify(stored));
+        return newId;
+      } catch { return uid(); }
+    })();
+    // Demo: immediately create session (real flow requires clicking email link)
+    const session = { user: { id, email: k }, access_token: uid() };
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    return session;
+    return { demoAutoLogin: true, session };
   },
   async signOut() { localStorage.removeItem(SESSION_KEY); },
   async getSession() {
@@ -112,60 +123,60 @@ const mockAuth = {
   },
 };
 
-// ── Real Supabase Google OAuth ──
+// ── Real Supabase Magic Link (GoTrue HTTP API) ──
 const sbAuth = {
-  // Redirect to Google OAuth — Supabase handles the entire flow
-  async signInWithGoogle() {
-    const redirectTo = window.location.origin;
-    window.location.href =
-      `${SB_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectTo)}`;
+  // Send OTP / magic link email
+  async sendOtp(email) {
+    const res = await fetch(`${SB_URL}/auth/v1/otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: SB_ANON },
+      body: JSON.stringify({
+        email: email.toLowerCase().trim(),
+        create_user: true,       // auto-register on first use
+        // type: "magiclink"     // default — sends a clickable link
+      }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error_description || data.msg || "發送失敗，請稍後再試");
+    }
+    return { demoAutoLogin: false };
   },
   async signOut() {
     const s = await this.getSession();
-    if (s) {
-      await fetch(`${SB_URL}/auth/v1/logout`, {
-        method: "POST",
-        headers: { apikey: SB_ANON, Authorization: `Bearer ${s.access_token}` },
-      }).catch(() => {});
-    }
+    if (s) await fetch(`${SB_URL}/auth/v1/logout`, {
+      method: "POST",
+      headers: { apikey: SB_ANON, Authorization: `Bearer ${s.access_token}` },
+    }).catch(() => {});
     localStorage.removeItem(SESSION_KEY);
   },
   async getSession() {
-    // After OAuth redirect, Supabase puts tokens in URL hash or query
+    // On initial load, check URL for access_token (magic link callback)
     if (typeof window !== "undefined") {
       const hash   = window.location.hash;
       const search = window.location.search;
-      const raw    = hash.startsWith("#") ? hash.slice(1) : search.startsWith("?") ? search.slice(1) : "";
-      if (raw) {
-        const params       = new URLSearchParams(raw);
-        const accessToken  = params.get("access_token");
-        const refreshToken = params.get("refresh_token");
-        if (accessToken) {
-          // Fetch user profile from Supabase
-          const res = await fetch(`${SB_URL}/auth/v1/user`, {
-            headers: { apikey: SB_ANON, Authorization: `Bearer ${accessToken}` },
-          });
-          if (res.ok) {
-            const user    = await res.json();
-            const session = {
-              user: {
-                id:     user.id,
-                email:  user.email,
-                name:   user.user_metadata?.full_name || user.email,
-                avatar: user.user_metadata?.avatar_url || null,
-              },
-              access_token:  accessToken,
-              refresh_token: refreshToken,
-            };
-            localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-            // Clean URL
-            window.history.replaceState(null, "", window.location.pathname);
-            return session;
-          }
+      const params = new URLSearchParams(
+        hash.startsWith("#") ? hash.slice(1) : search.startsWith("?") ? search.slice(1) : ""
+      );
+      const accessToken  = params.get("access_token");
+      const refreshToken = params.get("refresh_token");
+      const type         = params.get("type");
+      if (accessToken && (type === "magiclink" || type === "signup" || type === "recovery" || !type)) {
+        // Fetch user info
+        const res = await fetch(`${SB_URL}/auth/v1/user`, {
+          headers: { apikey: SB_ANON, Authorization: `Bearer ${accessToken}` },
+        });
+        if (res.ok) {
+          const user = await res.json();
+          const session = { user: { id: user.id, email: user.email }, access_token: accessToken, refresh_token: refreshToken };
+          localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+          // Clean URL so tokens don't linger
+          window.history.replaceState(null, "", window.location.pathname);
+          return session;
         }
       }
     }
-    // Try stored session, refresh if possible
+    // Otherwise try stored session with refresh
     const raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return null;
     try {
@@ -178,16 +189,7 @@ const sbAuth = {
         });
         if (res.ok) {
           const data  = await res.json();
-          const fresh = {
-            user: {
-              id:     data.user.id,
-              email:  data.user.email,
-              name:   data.user.user_metadata?.full_name || data.user.email,
-              avatar: data.user.user_metadata?.avatar_url || null,
-            },
-            access_token:  data.access_token,
-            refresh_token: data.refresh_token,
-          };
+          const fresh = { user: { id: data.user.id, email: data.user.email }, access_token: data.access_token, refresh_token: data.refresh_token };
           localStorage.setItem(SESSION_KEY, JSON.stringify(fresh));
           return fresh;
         }
@@ -267,7 +269,7 @@ function ThemeProvider({ children }) {
 // ─────────────────────────────────────────────────────────────────
 //  § 6  AuthContext
 // ─────────────────────────────────────────────────────────────────
-const AuthCtx = createContext({ session:null, loading:true, signInWithGoogle:async()=>{}, signOut:async()=>{} });
+const AuthCtx = createContext({ session:null, loading:true, sendOtp:async()=>{}, signOut:async()=>{} });
 
 function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
@@ -277,68 +279,74 @@ function AuthProvider({ children }) {
     const unsub=authAdapter.onAuthStateChange(s=>setSession(s));
     return unsub;
   },[]);
-  const signInWithGoogle = useCallback(async()=>{
-    await authAdapter.signInWithGoogle();
-    // In mock mode, read the session that was just set
-    if (IS_MOCK) {
-      const s = await authAdapter.getSession();
-      setSession(s);
-    }
-    // In real mode, page redirects to Google — nothing more to do here
+  const sendOtp = useCallback(async(email)=>{
+    const result = await authAdapter.sendOtp(email);
+    // Demo mode: auto-login immediately
+    if (result?.demoAutoLogin && result?.session) setSession(result.session);
+    return result;
   },[]);
   const signOut = useCallback(async()=>{await authAdapter.signOut();setSession(null);},[]);
-  return <AuthCtx.Provider value={{session,loading,signInWithGoogle,signOut}}>{children}</AuthCtx.Provider>;
+  return <AuthCtx.Provider value={{session,loading,sendOtp,signOut}}>{children}</AuthCtx.Provider>;
 }
 
 // ─────────────────────────────────────────────────────────────────
-//  § 7  LoginPage — Google OAuth
+//  § 7  LoginPage — Magic Link
 // ─────────────────────────────────────────────────────────────────
-function GoogleIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0}}>
-      <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908C16.658 14.013 17.64 11.705 17.64 9.2z" fill="#4285F4"/>
-      <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
-      <path d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
-      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
-    </svg>
-  );
-}
-
 function LoginPage() {
-  const { signInWithGoogle } = useContext(AuthCtx);
-  const [busy, setBusy]      = useState(false);
-  const [err,  setErr]       = useState("");
+  const { sendOtp }        = useContext(AuthCtx);
+  const [email,  setEmail] = useState("");
+  const [sent,   setSent]  = useState(false);
+  const [err,    setErr]   = useState("");
+  const [busy,   setBusy]  = useState(false);
 
-  const handleGoogle = async () => {
-    setErr(""); setBusy(true);
-    try { await signInWithGoogle(); }
-    catch(e) { setErr(e.message || "登入失敗，請再試"); setBusy(false); }
+  const submit = async () => {
+    setErr("");
+    if (!email.trim() || !email.includes("@")) { setErr("請輸入有效的 Email"); return; }
+    setBusy(true);
+    try {
+      await sendOtp(email.trim());
+      setSent(true);
+    } catch(e) { setErr(e.message || "發送失敗，請稍後再試"); }
+    finally { setBusy(false); }
   };
 
   return (
     <div className="login-ocean">
-      <div className="l-orb l-orb1"/><div className="l-orb l-orb2"/><div className="l-orb l-orb3"/>
+      <div className="l-orb l-orb1" /><div className="l-orb l-orb2" /><div className="l-orb l-orb3" />
       <div className="login-glass">
+        {/* Logo */}
         <div className="login-logo">
-          <div className="logo-sphere"/>
-          <span className="logo-text">
-            <span className="lt-a">E A S</span><span className="lt-b"> E A</span>
-          </span>
+          <div className="logo-sphere" />
+          <span className="logo-text"><span className="lt-a">E A S</span><span className="lt-b"> E A</span></span>
         </div>
 
-        <p className="login-title">你的 Ocean Flow</p>
-        <p className="login-tag">時間像水一樣流動。<br/>用 Google 登入，所有裝置自動同步。</p>
-
-        {err && <div className="lmsg err">{err}</div>}
-
-        <button className="google-btn" onClick={handleGoogle} disabled={busy}>
-          {busy
-            ? <span className="google-btn-inner"><span className="tide-spin-sm"/><span>連線中…</span></span>
-            : <span className="google-btn-inner"><GoogleIcon/><span>使用 Google 登入</span></span>
-          }
-        </button>
-
-        {IS_MOCK && <p className="ldemo">Demo 模式 · 點擊直接進入，不需要真實 Google 帳號</p>}
+        {!sent ? (
+          <>
+            <p className="login-title">登入你的 Ocean Flow</p>
+            <p className="login-tag">輸入 Email，我們會寄送登入連結給你。</p>
+            {err && <div className="lmsg err">{err}</div>}
+            <input
+              className="linput" type="email" placeholder="your@email.com"
+              value={email} onChange={e => setEmail(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && submit()} autoFocus
+            />
+            <button className="lbtn" onClick={submit} disabled={busy}>
+              {busy ? "寄送中…" : "寄送登入連結"}
+            </button>
+            {IS_MOCK && (
+              <p className="ldemo">Demo 模式 · 輸入任意 Email 直接登入，不會真的寄信</p>
+            )}
+          </>
+        ) : (
+          <div className="login-sent">
+            <div className="sent-icon">✉️</div>
+            <p className="sent-title">登入信已寄出</p>
+            <p className="sent-sub">請檢查 <strong>{email}</strong> 的信箱，點擊信中連結即可登入。</p>
+            <button className="lbtn-ghost" onClick={() => { setSent(false); setEmail(""); }}>
+              換一個 Email
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

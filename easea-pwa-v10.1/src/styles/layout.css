@@ -1,0 +1,227 @@
+/* ══ Reset + Base ══ */
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+
+html,body { height:100%; }
+body {
+  background:
+    radial-gradient(ellipse 120% 45% at 50% 0%, rgba(200,215,248,.28) 0%, transparent 70%),
+    radial-gradient(ellipse 80% 30% at 20% 0%, rgba(190,205,242,.14) 0%, transparent 55%),
+    var(--bg);
+  font-family:"Inter","SF Pro Text","Noto Sans TC",system-ui,sans-serif;
+  font-weight:470;
+  line-height:1.55;
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  -webkit-overflow-scrolling:touch;
+  overflow-x:hidden;
+  transition:background .4s, color .3s;
+}
+[data-theme="dark"] body,
+body[data-theme="dark"] {
+  background:
+    radial-gradient(ellipse 120% 45% at 50% 0%, rgba(40,70,140,.20) 0%, transparent 70%),
+    radial-gradient(ellipse 80% 30% at 20% 0%, rgba(30,55,120,.12) 0%, transparent 55%),
+    var(--bg);
+}
+
+/* ══ App shell ══ */
+.app-shell {
+  position:relative;
+  max-width:430px;
+  margin:0 auto;
+  min-height:100vh;
+  overflow:hidden;
+  padding-bottom:120px;
+}
+
+/* ③ Top haze — pure gradient, no divider line */
+.app-shell::before {
+  content:'';
+  position:fixed;
+  top:0; left:50%; transform:translateX(-50%);
+  width:430px;
+  height:200px;
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(235,240,255,.40) 0%,
+      rgba(235,240,255,.12) 60%,
+      transparent 100%
+    );
+  pointer-events:none;
+  z-index:8;
+}
+[data-theme="dark"] .app-shell::before,
+body[data-theme="dark"] .app-shell::before {
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(8,18,38,.38) 0%,
+      rgba(8,18,38,.10) 60%,
+      transparent 100%
+    );
+}
+
+/* ⑥ Light particles — 3 dots, very slow drift */
+.app-shell::after {
+  content:'';
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:1;
+  background:
+    radial-gradient(circle 2px at 22% 28%, rgba(180,200,255,.50) 0%, transparent 100%),
+    radial-gradient(circle 1.5px at 70% 55%, rgba(200,215,255,.40) 0%, transparent 100%),
+    radial-gradient(circle 1px at 44% 74%, rgba(170,195,248,.35) 0%, transparent 100%);
+  animation: particleDrift 20s ease-in-out infinite alternate;
+}
+[data-theme="dark"] .app-shell::after,
+body[data-theme="dark"] .app-shell::after {
+  background:
+    radial-gradient(circle 2px at 22% 28%, rgba(100,150,240,.38) 0%, transparent 100%),
+    radial-gradient(circle 1.5px at 70% 55%, rgba(80,130,220,.28) 0%, transparent 100%),
+    radial-gradient(circle 1px at 44% 74%, rgba(60,110,200,.24) 0%, transparent 100%);
+}
+
+/* ══ Background orbs ══ */
+.bg-orb {
+  position:fixed; border-radius:50%;
+  pointer-events:none; z-index:0; filter:blur(70px);
+}
+.o1 { width:340px; height:340px; top:-80px;  left:-80px;  background:var(--orb1); animation:o1 28s ease-in-out infinite; }
+.o2 { width:270px; height:270px; top:30%;    right:-60px; background:var(--orb2); animation:o2 34s ease-in-out infinite; }
+.o3 { width:230px; height:230px; bottom:14%; left:10%;    background:var(--orb3); animation:o3 24s ease-in-out infinite; }
+
+/* ══ Topbar — no border, floats in haze ══ */
+.topbar {
+  position:relative; z-index:10;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:24px 26px 0;
+}
+.tb-brand {
+  display:flex; align-items:center; gap:7px;
+  opacity:.62; transition:opacity .2s; cursor:default;
+}
+.tb-brand:hover { opacity:.90; }
+
+/* Topbar orb — mini version of login logo-sphere */
+.tb-orb {
+  width:18px; height:18px; border-radius:50%;
+  background:
+    radial-gradient(circle at 38% 35%,
+      rgba(228,222,252,.92) 0%,
+      rgba(172,192,240,.68) 32%,
+      rgba(128,162,226,.44) 62%,
+      rgba(88,128,202,.18) 100%
+    );
+  box-shadow:
+    0 0 0 1px rgba(200,215,250,.30),
+    0 0 8px  rgba(155,180,238,.24),
+    0 0 0 1px rgba(255,255,255,.22) inset;
+  filter:blur(.3px);
+  flex-shrink:0;
+}
+.tb-wordmark { font-size:14px; font-weight:500; letter-spacing:.06em; line-height:1; }
+.tb-ea  { color:var(--ink2); }
+.tb-sea { color:var(--accent); }
+.tb-right { display:flex; align-items:center; gap:10px; }
+
+.sync-bead { width:5px; height:5px; border-radius:50%; background:var(--ink4); transition:background .4s; opacity:.55; }
+.sync-bead.on { background:#52D68A; opacity:1; }
+
+.tb-avatar {
+  width:26px; height:26px; border-radius:50%;
+  background:transparent; border:1px solid rgba(185,205,240,.35);
+  font-size:10.5px; font-weight:500; color:var(--ink3);
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:all .22s; opacity:.65;
+}
+.tb-avatar:hover { opacity:1; background:var(--glass); border-color:var(--accent); color:var(--accent); }
+
+/* ══ Ocean view — continuous with topbar ══ */
+.ocean-view { position:relative; z-index:5; padding:0 26px; }
+.ov-header  { padding:38px 0 0; }
+
+.ov-greet {
+  font-size:34px; font-weight:650; color:var(--ink);
+  letter-spacing:-.02em; line-height:1.15;
+  text-shadow:0 2px 20px rgba(140,165,220,.12);
+}
+.ov-sub {
+  font-size:14.5px; color:var(--ink3);
+  margin-top:9px; font-weight:470; line-height:1.65; opacity:.88;
+}
+
+.ov-surface { margin-top:40px; }
+
+/* ══ Empty state ══ */
+.ov-empty       { text-align:center; padding:60px 0 24px; }
+.ov-wave        { font-size:46px; display:inline-block; animation:buoyBob 4s ease-in-out infinite; }
+.ov-empty-title { font-size:19px; font-weight:580; color:var(--ink2); margin-top:14px; }
+.ov-empty-sub   { font-size:13.5px; color:var(--ink3); margin-top:6px; font-weight:430; line-height:1.75; }
+
+/* ══ More button ══ */
+.ov-more {
+  display:block; width:100%; margin-top:22px;
+  background:none; border:none; cursor:pointer;
+  font-family:inherit; font-size:12px; font-weight:400;
+  color:var(--ink4); text-align:center; letter-spacing:.06em;
+  padding:10px 0; transition:color .14s;
+}
+.ov-more:hover { color:var(--ink3); }
+
+/* ══ Buoy FAB — misty orb ══ */
+.buoy {
+  position:fixed; bottom:34px; right:28px;
+  width:52px; height:52px; border-radius:50%;
+  background:
+    radial-gradient(circle at 38% 36%,
+      rgba(180,200,248,.75) 0%,
+      rgba(130,160,230,.50) 55%,
+      rgba(100,130,210,.30) 100%
+    );
+  border:1px solid rgba(200,220,255,.35);
+  color:var(--accent); cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  z-index:100;
+  box-shadow:0 4px 20px rgba(110,140,220,.16), 0 0 0 5px rgba(160,185,240,.05), 0 0 0 1px rgba(255,255,255,.16) inset;
+  animation:buoyBob 3.5s ease-in-out infinite;
+  transition:background .3s, transform .15s, box-shadow .3s;
+}
+.buoy:hover {
+  animation:none;
+  background:radial-gradient(circle at 38% 36%, rgba(200,218,255,.88) 0%, rgba(140,168,240,.70) 55%, rgba(110,142,220,.50) 100%);
+  transform:scale(1.1);
+  box-shadow:0 8px 28px rgba(110,140,220,.28), 0 0 0 7px rgba(160,185,240,.07);
+}
+.buoy:active { animation:none; transform:scale(.94); }
+[data-theme="dark"] .buoy,
+body[data-theme="dark"] .buoy {
+  background:radial-gradient(circle at 38% 36%, rgba(70,110,190,.65) 0%, rgba(44,82,160,.44) 55%, rgba(26,58,132,.26) 100%);
+  border-color:rgba(80,120,200,.28);
+  box-shadow:0 4px 20px rgba(60,100,200,.22), 0 0 0 5px rgba(60,100,200,.05), 0 0 0 1px rgba(140,180,255,.10) inset;
+}
+
+/* ══ User menu ══ */
+.umenu {
+  position:absolute; top:36px; right:0;
+  background:var(--glass-str); border:1px solid var(--glass-bd); border-radius:18px;
+  box-shadow:0 6px 24px rgba(8,18,40,.08);
+  padding:14px; min-width:200px; z-index:300;
+  animation:fadeIn .13s;
+}
+.u-email { font-size:12px; color:var(--ink2); padding-bottom:10px; border-bottom:1px solid var(--fog-bd); margin-bottom:10px; font-weight:400; }
+.u-themes { display:flex; gap:4px; margin-bottom:10px; }
+.uth { flex:1; padding:8px; border:1px solid var(--fog-bd); background:var(--fog); border-radius:10px; cursor:pointer; font-size:15px; transition:all .13s; }
+.uth.on { border-color:var(--accent); background:var(--accent-s); }
+.uth:hover:not(.on) { background:var(--glass-str); }
+.u-out { width:100%; padding:8px; border:none; background:none; font-family:inherit; font-size:13px; color:var(--ink3); cursor:pointer; border-radius:10px; text-align:left; transition:all .12s; }
+.u-out:hover { background:var(--fog); color:var(--ink2); }
+
+/* ══ Spinner ══ */
+.tide-spin { width:20px; height:20px; border-radius:50%; border:1.5px solid var(--fog-bd); border-top-color:var(--accent); animation:tideSpin .9s linear infinite; }
+
+/* ══ Scroll ══ */
+html { scroll-behavior:smooth; }
+::-webkit-scrollbar { width:0; height:0; }
+* { scrollbar-width:none; }
