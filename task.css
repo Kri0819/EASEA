@@ -52,7 +52,6 @@ body[data-theme="dark"] .tl { background:transparent; }
 /* ══ Drawer ══ */
 .tl-drawer {
   padding:10px 0 14px 34px;
-  border-bottom:1px solid var(--fog-bd);
   animation:drawerIn .2s ease both;
 }
 
@@ -112,34 +111,11 @@ body[data-theme="dark"] .tl { background:transparent; }
 
 .tl-hint { font-size:11px; color:var(--ink3); margin-top:8px; font-weight:430; letter-spacing:.02em; opacity:.75; }
 
-/* ══ Progress system ══ */
+/* ══ Progress system — color shift on the indicator dot ══ */
 .progress-dot {
   width:7px; height:7px; border-radius:50%;
   flex-shrink:0;
   background:rgba(100,175,148,.65);
   transition:background .4s;
 }
-.progress-dot.just-marked { animation:progressGlow 1.6s ease-out forwards; }
-
-.progress-whisper {
-  font-size:11px; color:var(--ink3); font-weight:430;
-  padding:5px 0 6px 34px;
-  letter-spacing:.02em; line-height:1.4;
-  opacity:.65;
-  transition:opacity .3s;
-}
-  opacity:.70;
-  transition:opacity .3s;
-}
-
-.tl-act.progress { border-color:rgba(100,175,148,.35); color:rgba(80,155,128,.8); }
-.tl-act.progress:hover {
-  background:rgba(100,175,148,.08);
-  border-color:rgba(100,175,148,.55);
-  color:rgba(70,145,118,.9);
-}
-
-[data-theme="dark"] .progress-dot    { background:rgba(90,185,148,.55); }
-[data-theme="dark"] .progress-whisper { color:var(--ink4); }
-[data-theme="dark"] .tl-act.progress { border-color:rgba(90,185,148,.28); color:rgba(90,185,148,.7); }
-[data-theme="dark"] .tl-act.progress:hover { background:rgba(90,185,148,.10); border-color:rgba(90,185,148,.5); color:rgba(90,185,148,.9); }
+[data-theme="dark"] .progress-dot { background:rgba(90,185,148,.55); }
