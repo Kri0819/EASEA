@@ -346,17 +346,14 @@ function LoginPage() {
 
 // ─────────────────────────────────────────────────────────────────
 //  § 8a  ProgressIndicator
-//        Shows the dot color — accent when progress_today is true.
-//        Props: hasProgress, isDone, intent, intentHint
+//        Tap the dot to mark progress. Green = touched today.
 // ─────────────────────────────────────────────────────────────────
 function ProgressIndicator({ hasProgress, isDone, intent, intentHint }) {
   if (isDone) return null;
   if (hasProgress) {
     return <span className="progress-dot" title="今天有前進一點" />;
   }
-  return (
-    <span className={`tl-dot tld-${intent.toLowerCase()}`} title={intentHint} />
-  );
+  return <span className={`tl-dot tld-${intent.toLowerCase()}`} title={intentHint} />;
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -446,7 +443,7 @@ function TaskActions({ taskId, intent, onShiftIntent, onDelete }) {
 //       Orchestrates sub-components.
 //       All animation, CSS classes, and props unchanged.
 // ─────────────────────────────────────────────────────────────────
-function TaskLine({ task, index, onToggleDone, onToggleStep, onShiftIntent, onAddStep, onDelete, isLeaving }) {
+function TaskLine({ task, index, onToggleDone, onToggleStep, onShiftIntent, onMarkProgress, onAddStep, onDelete, isLeaving }) {
   const [open, setOpen] = useState(false);
 
   const steps       = task.steps || [];
@@ -463,7 +460,6 @@ function TaskLine({ task, index, onToggleDone, onToggleStep, onShiftIntent, onAd
       className={`tl${isDone ? " tl-done" : ""}${isLeaving ? " tl-leaving" : ""}`}
       style={{ opacity, transform: `translateY(${shiftY}px)` }}
     >
-      {/* Main row */}
       <div className="tl-row" onClick={() => !isDone && setOpen(o => !o)}>
         <button
           className={`tl-check${isDone ? " done" : ""}`}
@@ -480,9 +476,17 @@ function TaskLine({ task, index, onToggleDone, onToggleStep, onShiftIntent, onAd
         />
       </div>
 
-      {/* Expanded drawer */}
       {open && !isDone && (
         <div className="tl-drawer">
+          {/* 今天有碰過 — 標記後消失 */}
+          {!hasProgress && (
+            <button
+              className="progress-touch-btn"
+              onClick={e => { e.stopPropagation(); onMarkProgress(task.id); }}
+            >
+              今天有碰過
+            </button>
+          )}
           <TaskSteps
             taskId={task.id}
             steps={steps}
@@ -566,14 +570,14 @@ function UserMenu({ onClose }) {
 // ─────────────────────────────────────────────────────────────────
 const SURFACE = 3;
 
-function TodayFlow({ tasks, onToggleDone, onToggleStep, onShiftIntent, onAddStep, onDelete }) {
+function TodayFlow({ tasks, onToggleDone, onToggleStep, onShiftIntent, onMarkProgress, onAddStep, onDelete }) {
   const today = todayStr();
   const [showRest, setShowRest] = useState(false);
 
   const { surface, rest, greet, sub } = useIntentFlow(tasks, today, flowScore);
   const { leaving, handleDone }       = useTaskAnimation(tasks, onToggleDone);
 
-  const h = { onToggleDone: handleDone, onToggleStep, onShiftIntent, onAddStep, onDelete };
+  const h = { onToggleDone: handleDone, onToggleStep, onShiftIntent, onMarkProgress, onAddStep, onDelete };
 
   return (
     <div className="ocean-view">

@@ -111,11 +111,24 @@ body[data-theme="dark"] .tl { background:transparent; }
 
 .tl-hint { font-size:11px; color:var(--ink3); margin-top:8px; font-weight:430; letter-spacing:.02em; opacity:.75; }
 
-/* ══ Progress system — color shift on the indicator dot ══ */
+/* ══ Progress system ══ */
 .progress-dot {
   width:7px; height:7px; border-radius:50%;
   flex-shrink:0;
-  background:rgba(100,175,148,.65);
-  transition:background .4s;
+  background:rgba(100,175,148,.70);
+  transition:background .3s;
 }
-[data-theme="dark"] .progress-dot { background:rgba(90,185,148,.55); }
+[data-theme="dark"] .progress-dot { background:rgba(90,185,148,.60); }
+
+/* 今天有碰過 — soft text link at top of drawer */
+.progress-touch-btn {
+  display:block;
+  background:none; border:none;
+  font-family:inherit; font-size:12px; font-weight:430;
+  color:var(--ink3); opacity:.70;
+  padding:0 0 10px 0;
+  cursor:pointer; letter-spacing:.02em;
+  transition:opacity .15s;
+  text-align:left;
+}
+.progress-touch-btn:hover { opacity:1; color:var(--accent); }
