@@ -120,15 +120,15 @@ body[data-theme="dark"] .tl { background:transparent; }
 }
 [data-theme="dark"] .progress-dot { background:rgba(90,185,148,.60); }
 
-/* 今天有碰過 — soft text link at top of drawer */
+/* 今天有碰過 — 極淡文字，不像按鈕 */
 .progress-touch-btn {
   display:block;
   background:none; border:none;
-  font-family:inherit; font-size:12px; font-weight:430;
-  color:var(--ink3); opacity:.70;
-  padding:0 0 10px 0;
-  cursor:pointer; letter-spacing:.02em;
-  transition:opacity .15s;
+  font-family:inherit; font-size:11.5px; font-weight:430;
+  color:var(--ink4);
+  padding:0 0 12px 0;
+  cursor:pointer; letter-spacing:.03em;
+  transition:color .2s;
   text-align:left;
 }
-.progress-touch-btn:hover { opacity:1; color:var(--accent); }
+.progress-touch-btn:hover { color:var(--ink3); }
