@@ -346,18 +346,13 @@ function LoginPage() {
 
 // ─────────────────────────────────────────────────────────────────
 //  § 8a  ProgressIndicator
-//        Shows the dot + whisper when progress_today is true.
-//        Props: hasProgress, isDone, justMarked
+//        Shows the dot color — accent when progress_today is true.
+//        Props: hasProgress, isDone, intent, intentHint
 // ─────────────────────────────────────────────────────────────────
-function ProgressIndicator({ hasProgress, isDone, justMarked, intent, intentHint }) {
+function ProgressIndicator({ hasProgress, isDone, intent, intentHint }) {
   if (isDone) return null;
   if (hasProgress) {
-    return (
-      <span
-        className={`progress-dot${justMarked ? " just-marked" : ""}`}
-        title="今天有前進一點"
-      />
-    );
+    return <span className="progress-dot" title="今天有前進一點" />;
   }
   return (
     <span className={`tl-dot tld-${intent.toLowerCase()}`} title={intentHint} />
@@ -416,27 +411,15 @@ function TaskSteps({ taskId, steps, onToggleStep, onAddStep }) {
 
 // ─────────────────────────────────────────────────────────────────
 //  § 8c  TaskActions
-//        Promote / demote / progress / remove buttons in drawer.
-//        Props: taskId, intent, hasProgress, onShiftIntent,
-//               onMarkProgress, onDelete, onJustMarked
+//        Promote / demote / remove buttons in drawer.
+//        Props: taskId, intent, onShiftIntent, onDelete
 // ─────────────────────────────────────────────────────────────────
-function TaskActions({ taskId, intent, hasProgress, onShiftIntent, onMarkProgress, onDelete, onJustMarked }) {
+function TaskActions({ taskId, intent, onShiftIntent, onDelete }) {
   const canPromote = !!IntentMachine[intent]?.promote;
   const canDemote  = !!IntentMachine[intent]?.demote;
 
-  const handleMarkProgress = () => {
-    if (hasProgress) return;
-    onMarkProgress(taskId);
-    onJustMarked();
-  };
-
   return (
     <div className="tl-actions">
-      {!hasProgress && (
-        <button className="tl-act progress" onClick={handleMarkProgress}>
-          今天有碰過
-        </button>
-      )}
       <button
         className="tl-act promote"
         onClick={() => onShiftIntent(taskId, "promote")}
@@ -460,12 +443,11 @@ function TaskActions({ taskId, intent, hasProgress, onShiftIntent, onMarkProgres
 
 // ─────────────────────────────────────────────────────────────────
 //  § 8  TaskLine
-//       Orchestrates sub-components. Owns open/justMarked state.
+//       Orchestrates sub-components.
 //       All animation, CSS classes, and props unchanged.
 // ─────────────────────────────────────────────────────────────────
-function TaskLine({ task, index, onToggleDone, onToggleStep, onShiftIntent, onMarkProgress, onAddStep, onDelete, isLeaving }) {
-  const [open,       setOpen]       = useState(false);
-  const [justMarked, setJustMarked] = useState(false);
+function TaskLine({ task, index, onToggleDone, onToggleStep, onShiftIntent, onAddStep, onDelete, isLeaving }) {
+  const [open, setOpen] = useState(false);
 
   const steps       = task.steps || [];
   const intent      = task.intent_state || "LATER";
@@ -475,11 +457,6 @@ function TaskLine({ task, index, onToggleDone, onToggleStep, onShiftIntent, onMa
 
   const opacity = isDone ? 0.28 : Math.max(1 - index * 0.09, 0.72);
   const shiftY  = isDone ? 0    : index * 1.5;
-
-  const handleJustMarked = () => {
-    setJustMarked(true);
-    setTimeout(() => setJustMarked(false), 2000);
-  };
 
   return (
     <div
@@ -498,16 +475,10 @@ function TaskLine({ task, index, onToggleDone, onToggleStep, onShiftIntent, onMa
         <ProgressIndicator
           hasProgress={hasProgress}
           isDone={isDone}
-          justMarked={justMarked}
           intent={intent}
           intentHint={ui.hint}
         />
       </div>
-
-      {/* Soft whisper — very low key */}
-      {hasProgress && !isDone && (
-        <p className="progress-whisper">今天有前進一點。</p>
-      )}
 
       {/* Expanded drawer */}
       {open && !isDone && (
@@ -521,11 +492,8 @@ function TaskLine({ task, index, onToggleDone, onToggleStep, onShiftIntent, onMa
           <TaskActions
             taskId={task.id}
             intent={intent}
-            hasProgress={hasProgress}
             onShiftIntent={onShiftIntent}
-            onMarkProgress={onMarkProgress}
             onDelete={onDelete}
-            onJustMarked={handleJustMarked}
           />
           <p className="tl-hint">{ui.hint}</p>
         </div>
@@ -598,14 +566,14 @@ function UserMenu({ onClose }) {
 // ─────────────────────────────────────────────────────────────────
 const SURFACE = 3;
 
-function TodayFlow({ tasks, onToggleDone, onToggleStep, onShiftIntent, onMarkProgress, onAddStep, onDelete }) {
+function TodayFlow({ tasks, onToggleDone, onToggleStep, onShiftIntent, onAddStep, onDelete }) {
   const today = todayStr();
   const [showRest, setShowRest] = useState(false);
 
   const { surface, rest, greet, sub } = useIntentFlow(tasks, today, flowScore);
   const { leaving, handleDone }       = useTaskAnimation(tasks, onToggleDone);
 
-  const h = { onToggleDone: handleDone, onToggleStep, onShiftIntent, onMarkProgress, onAddStep, onDelete };
+  const h = { onToggleDone: handleDone, onToggleStep, onShiftIntent, onAddStep, onDelete };
 
   return (
     <div className="ocean-view">
