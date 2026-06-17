@@ -23,76 +23,45 @@
 }
 
 /* ══ Logo ══ */
-.login-logo { display:flex; flex-direction:column; align-items:center; gap:16px; margin-bottom:10px; }
-
-.logo-sphere {
-  width:64px; height:64px; border-radius:50%;
-  position:relative;
-  /* Layered mist — deep ocean center, pale edge */
-  background:
-    radial-gradient(circle at 38% 35%,
-      rgba(230,225,255,.90) 0%,
-      rgba(175,195,242,.65) 30%,
-      rgba(130,165,228,.42) 62%,
-      rgba(90,130,205,.18) 100%
-    );
-  /* Outer glow ring — like moonlight on fog */
-  box-shadow:
-    0 0 0 1px  rgba(200,215,252,.35),
-    0 0 18px   rgba(160,185,240,.30),
-    0 0 40px   rgba(140,170,230,.16),
-    0 4px 24px rgba(110,145,215,.22);
-  /* Very slight blur softens the edge */
-  filter:blur(.4px);
-  animation:sphereFl 6s ease-in-out infinite;
-  overflow:hidden;
+/* ══ Logo — now uses shared EaseaLogo component ══ */
+.login-logo {
+  display:flex; flex-direction:column;
+  align-items:center; gap:14px; margin-bottom:12px;
 }
 
-/* Inner light points — like stars through fog */
-.logo-sphere::before,
-.logo-sphere::after {
-  content:'';
-  position:absolute;
-  border-radius:50%;
-  pointer-events:none;
-}
-/* Primary soft light */
-.logo-sphere::before {
-  width:10px; height:10px;
-  top:22%; left:28%;
-  background:radial-gradient(circle, rgba(255,255,255,.88) 0%, transparent 70%);
-  filter:blur(1.5px);
-}
-/* Secondary dim light */
-.logo-sphere::after {
-  width:5px; height:5px;
-  top:38%; left:52%;
-  background:radial-gradient(circle, rgba(255,255,255,.55) 0%, transparent 70%);
-  filter:blur(1px);
-}
+/* Shared EaseaLogo component styles */
+.easea-logo { display:inline-flex; align-items:center; }
+.easea-logo-text { font-family:"Inter","SF Pro Text","Noto Sans TC",system-ui,sans-serif; }
+.easea-logo-ea   { color:var(--ink2); }
+.easea-logo-sea  { color:var(--accent); }
 
-.logo-text {
-  font-size:15px; font-weight:500;
-  letter-spacing:.30em; color:var(--ink3);
-  opacity:.80;
+/* ══ Brand area ══ */
+.login-brand-area {
+  display:flex; flex-direction:column;
+  align-items:center; gap:0;
+  margin-bottom:40px;
+  padding-top:8px;
 }
-.lt-b { color:var(--accent); opacity:1; }
+.login-brand-area .easea-logo { margin-bottom:18px; }
 
-/* ══ Copy ══ */
-.login-title {
-  font-size:22px;
-  font-weight:650;
-  color:var(--ink);
-  margin-bottom:8px;
-  letter-spacing:-.02em;
-  line-height:1.25;
-}
-.login-tag {
-  font-size:14px;
+.login-wordmark {
+  font-size:13px;
+  font-weight:300;
+  letter-spacing:.42em;
   color:var(--ink2);
-  font-weight:470;
-  line-height:1.65;
-  margin-bottom:26px;
+  text-indent:.42em;  /* compensate last letter spacing */
+  line-height:1;
+  margin-bottom:14px;
+}
+
+.login-tagline {
+  font-size:12.5px;
+  font-weight:400;
+  color:var(--ink4);
+  letter-spacing:.03em;
+  line-height:1.7;
+  text-align:center;
+  font-style:italic;
 }
 
 /* ══ Sent state ══ */

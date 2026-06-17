@@ -13,6 +13,7 @@ import './styles/sheet.css';
 import { useTasks }         from './hooks/useTasks.js';
 import { useIntentFlow }    from './hooks/useIntentFlow.js';
 import { useTaskAnimation } from './hooks/useTaskAnimation.js';
+import EaseaLogo            from './EaseaLogo.jsx';
 
 import {
   useState, useEffect, useCallback,
@@ -25,6 +26,9 @@ import {
 const SB_URL  = import.meta.env.VITE_SUPABASE_URL  || "";
 const SB_ANON = import.meta.env.VITE_SUPABASE_ANON || "";
 const IS_MOCK = !SB_URL || !SB_ANON;
+
+// ─── Brand
+const BRAND_TAGLINE = "Let tasks find their natural distance.";
 
 // ─────────────────────────────────────────────────────────────────
 //  § 2  Utils
@@ -319,15 +323,13 @@ function LoginPage() {
     <div className="login-ocean">
       <div className="l-orb l-orb1"/><div className="l-orb l-orb2"/><div className="l-orb l-orb3"/>
       <div className="login-glass">
-        <div className="login-logo">
-          <div className="logo-sphere"/>
-          <span className="logo-text">
-            <span className="lt-a">E A S</span><span className="lt-b"> E A</span>
-          </span>
-        </div>
 
-        <p className="login-title">你的 Ocean Flow</p>
-        <p className="login-tag">時間像水一樣流動。<br/>用 Google 登入，所有裝置自動同步。</p>
+        {/* ── Brand area ── */}
+        <div className="login-brand-area">
+          <EaseaLogo size={68} showText={false} />
+          <p className="login-wordmark">E A S E A</p>
+          <p className="login-tagline">{BRAND_TAGLINE}</p>
+        </div>
 
         {err && <div className="lmsg err">{err}</div>}
 
@@ -338,7 +340,7 @@ function LoginPage() {
           }
         </button>
 
-        {IS_MOCK && <p className="ldemo">Demo 模式 · 點擊直接進入，不需要真實 Google 帳號</p>}
+        {IS_MOCK && <p className="ldemo">Demo 模式 · 點擊直接進入</p>}
       </div>
     </div>
   );
@@ -638,12 +640,10 @@ function AppShell() {
       <div className="bg-orb o1"/><div className="bg-orb o2"/><div className="bg-orb o3"/>
 
       <header className="topbar">
-        <span className="tb-brand">
-          <span className="tb-orb" />
-          <span className="tb-wordmark">
-            <span className="tb-ea">Ea</span><span className="tb-sea">sea</span>
-          </span>
-        </span>
+        <div className="tb-brand-wrap">
+          <EaseaLogo size={22} showText={false} />
+          <span className="tb-wordmark">E A S E A</span>
+        </div>
         <div className="tb-right">
           {!IS_MOCK && <div className={`sync-bead${synced ? " on" : ""}`}/>}
           <div style={{ position: "relative" }}>

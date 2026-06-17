@@ -1,50 +1,50 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600&display=swap');
 
-/* ══ Tokens — Light ══ */
+/* ══ Tokens — Light (月光霧海) ══ */
 :root {
-  --bg:         #EBF0FA;
-  --surface:    #FFFFFF;
-  --glass:      rgba(255,255,255,.62);
-  --glass-str:  rgba(255,255,255,.88);
-  --glass-bd:   rgba(190,210,245,.38);
-  --fog:        rgba(248,250,255,.78);
-  --fog-bd:     rgba(185,205,240,.28);
+  --bg:         #EDF2FB;
+  --surface:    rgba(255,255,255,.70);
+  --glass:      rgba(255,255,255,.48);
+  --glass-str:  rgba(255,255,255,.78);
+  --glass-bd:   rgba(185,208,242,.32);
+  --fog:        rgba(246,250,255,.72);
+  --fog-bd:     rgba(180,202,238,.22);
 
-  --ink:        #1C2A3E;
-  --ink2:       #3D5070;
-  --ink3:       #6880A0;
-  --ink4:       #A8BDD4;
+  --ink:        #1A2840;
+  --ink2:       #3A4E6A;
+  --ink3:       #6278A0;
+  --ink4:       #A0B4CC;
 
-  --orb1:       rgba(180,198,238,.32);
-  --orb2:       rgba(210,188,230,.24);
-  --orb3:       rgba(162,212,234,.22);
+  --orb1:       rgba(176,196,236,.28);
+  --orb2:       rgba(208,186,228,.22);
+  --orb3:       rgba(158,210,232,.20);
 
-  --accent:     #5B82D4;
-  --accent-d:   #4468C0;
-  --accent-s:   rgba(91,130,212,.09);
+  --accent:     #5880D0;
+  --accent-d:   #4266BC;
+  --accent-s:   rgba(88,128,208,.08);
 }
 
-/* ══ Tokens — Dark ══ */
+/* ══ Tokens — Dark (深海月夜) ══ */
 :root[data-theme="dark"],
 body[data-theme="dark"] {
-  --bg:         #08121C;
-  --surface:    #0F1E30;
-  --glass:      rgba(15,30,50,.72);
-  --glass-str:  rgba(20,38,62,.90);
-  --glass-bd:   rgba(55,90,140,.38);
-  --fog:        rgba(12,24,42,.80);
-  --fog-bd:     rgba(45,78,118,.35);
+  --bg:         #070F1A;
+  --surface:    rgba(12,24,42,.75);
+  --glass:      rgba(14,28,48,.60);
+  --glass-str:  rgba(18,34,58,.82);
+  --glass-bd:   rgba(48,80,128,.32);
+  --fog:        rgba(10,20,38,.70);
+  --fog-bd:     rgba(40,68,108,.28);
 
-  --ink:        #D8EAF8;
-  --ink2:       #90B0CC;
-  --ink3:       #5A7898;
-  --ink4:       #304860;
+  --ink:        #D4E6F8;
+  --ink2:       #8AAAC6;
+  --ink3:       #567090;
+  --ink4:       #2C4460;
 
-  --orb1:       rgba(40,72,158,.32);
-  --orb2:       rgba(68,42,118,.26);
-  --orb3:       rgba(24,70,128,.28);
+  --orb1:       rgba(36,66,148,.28);
+  --orb2:       rgba(62,38,112,.22);
+  --orb3:       rgba(20,62,118,.24);
 
-  --accent:     #6098E8;
-  --accent-d:   #4478D4;
-  --accent-s:   rgba(96,152,232,.12);
+  --accent:     #5C96E4;
+  --accent-d:   #4278D0;
+  --accent-s:   rgba(92,150,228,.10);
 }

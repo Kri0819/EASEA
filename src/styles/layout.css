@@ -92,51 +92,43 @@ body[data-theme="dark"] .app-shell::after {
 .o2 { width:270px; height:270px; top:30%;    right:-60px; background:var(--orb2); animation:o2 34s ease-in-out infinite; }
 .o3 { width:230px; height:230px; bottom:14%; left:10%;    background:var(--orb3); animation:o3 24s ease-in-out infinite; }
 
-/* ══ Topbar — no border, floats in haze ══ */
+/* ══ Topbar — floats in haze, no border ══ */
 .topbar {
   position:relative; z-index:10;
   display:flex; align-items:center; justify-content:space-between;
-  padding:24px 26px 0;
+  padding:28px 30px 0;
 }
-.tb-brand {
-  display:flex; align-items:center; gap:7px;
-  opacity:.62; transition:opacity .2s; cursor:default;
-}
-.tb-brand:hover { opacity:.90; }
 
-/* Topbar orb — mini version of login logo-sphere */
-.tb-orb {
-  width:18px; height:18px; border-radius:50%;
-  background:
-    radial-gradient(circle at 38% 35%,
-      rgba(228,222,252,.92) 0%,
-      rgba(172,192,240,.68) 32%,
-      rgba(128,162,226,.44) 62%,
-      rgba(88,128,202,.18) 100%
-    );
-  box-shadow:
-    0 0 0 1px rgba(200,215,250,.30),
-    0 0 8px  rgba(155,180,238,.24),
-    0 0 0 1px rgba(255,255,255,.22) inset;
-  filter:blur(.3px);
-  flex-shrink:0;
+/* Brand wrap — logo orb + spaced wordmark */
+.tb-brand-wrap {
+  display:flex; align-items:center; gap:9px;
+  opacity:.52; transition:opacity .24s;
 }
-.tb-wordmark { font-size:14px; font-weight:500; letter-spacing:.06em; line-height:1; }
-.tb-ea  { color:var(--ink2); }
-.tb-sea { color:var(--accent); }
-.tb-right { display:flex; align-items:center; gap:10px; }
+.tb-brand-wrap:hover { opacity:.82; }
 
-.sync-bead { width:5px; height:5px; border-radius:50%; background:var(--ink4); transition:background .4s; opacity:.55; }
-.sync-bead.on { background:#52D68A; opacity:1; }
+.tb-wordmark {
+  font-size:11px; font-weight:300;
+  letter-spacing:.36em; color:var(--ink2);
+  text-indent:.36em; line-height:1;
+}
+
+/* Legacy direct logo */
+.topbar > .easea-logo { opacity:.52; transition:opacity .22s; }
+.topbar > .easea-logo:hover { opacity:.82; }
+
+.tb-right { display:flex; align-items:center; gap:12px; }
+
+.sync-bead { width:4px; height:4px; border-radius:50%; background:var(--ink4); transition:background .4s; opacity:.40; }
+.sync-bead.on { background:#52D68A; opacity:.75; }
 
 .tb-avatar {
-  width:26px; height:26px; border-radius:50%;
-  background:transparent; border:1px solid rgba(185,205,240,.35);
-  font-size:10.5px; font-weight:500; color:var(--ink3);
+  width:24px; height:24px; border-radius:50%;
+  background:transparent; border:1px solid rgba(185,205,240,.28);
+  font-size:10px; font-weight:400; color:var(--ink4);
   cursor:pointer; display:flex; align-items:center; justify-content:center;
-  transition:all .22s; opacity:.65;
+  transition:all .22s; opacity:.55;
 }
-.tb-avatar:hover { opacity:1; background:var(--glass); border-color:var(--accent); color:var(--accent); }
+.tb-avatar:hover { opacity:.90; background:var(--glass); border-color:var(--accent); color:var(--accent); }
 
 /* ══ Ocean view — continuous with topbar ══ */
 .ocean-view { position:relative; z-index:5; padding:0 26px; }
