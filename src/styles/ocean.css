@@ -1,0 +1,294 @@
+/* ══ Ocean Surface — Sea Mode ══ */
+
+/* ── Canvas wrapper ── */
+.sea-canvas {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 80px);
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.sea-canvas:active { cursor: grabbing; }
+
+/* ── Pan surface (the actual 2D space) ── */
+.sea-surface {
+  position: absolute;
+  width: 1400px;
+  height: 1000px;
+  will-change: transform;
+  transition: none; /* panning is immediate */
+}
+.sea-surface.animating {
+  transition: transform 600ms cubic-bezier(.25, .46, .45, .94);
+}
+
+/* ── Sea greeting ── */
+.sea-greeting {
+  position: absolute;
+  top: 36px;
+  left: 0; right: 0;
+  text-align: center;
+  z-index: 5;
+  pointer-events: none;
+}
+.sea-greeting-text {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--ink4);
+  letter-spacing: .12em;
+  opacity: .75;
+}
+
+/* ── Floating orb (task = large item) ── */
+.sea-orb-wrap {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  /* Each orb transitions its own opacity/scale */
+  transition:
+    opacity 400ms cubic-bezier(.25,.46,.45,.94),
+    transform 400ms cubic-bezier(.25,.46,.45,.94),
+    filter 400ms cubic-bezier(.25,.46,.45,.94);
+}
+
+/* Dimmed state when another orb is focused */
+.sea-orb-wrap.dimmed {
+  opacity: .18;
+  filter: blur(1.5px);
+  transform: scale(.94);
+  pointer-events: none;
+}
+
+/* Focused state */
+.sea-orb-wrap.focused {
+  opacity: 1;
+  z-index: 20;
+}
+
+/* Orb SVG container */
+.sea-orb {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Subtle bob animation when idle */
+  animation: seaOrbBob var(--bob-dur, 5s) ease-in-out var(--bob-delay, 0s) infinite;
+}
+.sea-orb-wrap.focused .sea-orb,
+.sea-orb-wrap.dimmed  .sea-orb { animation: none; }
+
+@keyframes seaOrbBob {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+/* Orb label */
+.sea-orb-label {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ink2);
+  letter-spacing: .04em;
+  text-align: center;
+  max-width: 100px;
+  line-height: 1.35;
+  opacity: .85;
+  transition: opacity 300ms ease, color 300ms ease;
+  pointer-events: none;
+}
+.sea-orb-wrap:hover   .sea-orb-label { opacity: 1; color: var(--ink); }
+.sea-orb-wrap.focused .sea-orb-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  opacity: 1;
+}
+
+/* Done orb — very faint */
+.sea-orb-wrap.done-orb {
+  opacity: .20;
+  filter: grayscale(.5);
+  pointer-events: none;
+}
+
+/* Intent dot on orb */
+.sea-intent-dot {
+  position: absolute;
+  bottom: 6px; right: 6px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  transition: all .3s;
+}
+.sid-now   { background: var(--accent); opacity:.9; box-shadow: 0 0 5px rgba(88,128,208,.5); }
+.sid-soon  { background: var(--accent); opacity:.5; }
+.sid-later { background: var(--ink4);   opacity:.5; }
+.sid-shelf { background: var(--ink4);   opacity:.2; }
+
+/* ══ Kelp chain — steps ══ */
+.kelp-chain {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 4px;
+  /* Grows from top, clipped initially */
+  overflow: hidden;
+}
+
+/* Connector line segment */
+.kelp-line {
+  width: 1.5px;
+  height: 28px;
+  background: linear-gradient(to bottom, var(--fog-bd) 0%, var(--fog-bd) 100%);
+  opacity: .55;
+  flex-shrink: 0;
+  transform-origin: top center;
+  transition: height 350ms cubic-bezier(.25,.46,.45,.94), opacity 350ms ease;
+}
+
+/* Step node */
+.kelp-node {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  background: var(--glass);
+  border: 1px solid var(--glass-bd);
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition:
+    opacity 350ms ease,
+    transform 350ms cubic-bezier(.25,.46,.45,.94),
+    background 200ms ease;
+}
+.kelp-node:hover { background: var(--glass-str); }
+
+.kelp-check {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 1px solid var(--glass-bd);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all .16s;
+  background: transparent; color: #fff;
+  flex-shrink: 0;
+}
+.kelp-check:hover   { border-color: var(--accent); background: var(--accent-s); }
+.kelp-check.done    { background: var(--accent); border-color: var(--accent); }
+.kelp-check svg     { display: block; }
+
+.kelp-label {
+  font-size: 12.5px; font-weight: 400;
+  color: var(--ink2); line-height: 1.3;
+}
+.kelp-label.done { text-decoration: line-through; color: var(--ink4); }
+
+/* Entry animation for each kelp node */
+@keyframes kelpAppear {
+  from { opacity:0; transform:translateY(-8px) scale(.95); }
+  to   { opacity:1; transform:none; }
+}
+.kelp-node.appearing {
+  animation: kelpAppear 360ms cubic-bezier(.22,1,.36,1) both;
+}
+
+/* Disappear */
+@keyframes kelpSink {
+  from { opacity:1; transform:none; }
+  to   { opacity:0; transform:translateY(10px) scale(.95); }
+}
+.kelp-node.sinking {
+  animation: kelpSink 280ms ease forwards;
+}
+
+/* ══ Focused task action bar ══ */
+.sea-action-bar {
+  position: fixed;
+  bottom: 90px;
+  left: 50%; transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 50;
+  animation: fadeInUp 300ms cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes fadeInUp {
+  from { opacity:0; transform:translateX(-50%) translateY(12px); }
+  to   { opacity:1; transform:translateX(-50%) translateY(0); }
+}
+.sea-act-btn {
+  background: var(--glass-str);
+  border: 1px solid var(--glass-bd);
+  border-radius: 99px;
+  padding: 7px 16px;
+  font-family: inherit; font-size: 12px; font-weight: 400;
+  color: var(--ink3); cursor: pointer;
+  transition: all .16s;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.sea-act-btn:hover { background: var(--fog); color: var(--ink2); }
+.sea-act-btn.promote:hover { border-color: var(--accent); color: var(--accent); }
+.sea-act-btn.danger:hover  { color: #A85050; border-color: rgba(168,80,80,.3); }
+
+/* ══ Back hint ══ */
+.sea-back {
+  position: fixed;
+  top: 72px; left: 50%; transform: translateX(-50%);
+  font-size: 11.5px; font-weight: 300;
+  color: var(--ink4); letter-spacing: .08em;
+  cursor: pointer; z-index: 50;
+  transition: color .16s;
+  animation: fadeIn .3s ease both;
+}
+.sea-back:hover { color: var(--ink3); }
+
+/* ══ Add step input (on focused task) ══ */
+.kelp-add-row {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 4px;
+}
+.kelp-add-line {
+  width: 1.5px; height: 20px;
+  background: var(--fog-bd); opacity: .4;
+}
+.kelp-add-btn {
+  font-size: 11.5px; font-weight: 300; color: var(--ink4);
+  background: none; border: none; cursor: pointer;
+  font-family: inherit; letter-spacing: .04em;
+  transition: color .14s;
+}
+.kelp-add-btn:hover { color: var(--ink3); }
+
+.kelp-input-row {
+  display: flex; gap: 6px; margin-top: 6px; align-items: center;
+}
+.kelp-input {
+  font-family: inherit; font-size: 12.5px; font-weight: 400;
+  color: var(--ink); background: var(--glass);
+  border: 1px solid var(--glass-bd); border-radius: 99px;
+  padding: 5px 12px; outline: none;
+  transition: border-color .14s;
+  width: 140px;
+}
+.kelp-input:focus { border-color: var(--accent); }
+.kelp-input::placeholder { color: var(--ink4); }
+.kelp-confirm {
+  background: var(--accent); color: #fff; border: none;
+  border-radius: 99px; padding: 5px 12px;
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  transition: background .13s;
+}
+.kelp-confirm:hover { background: var(--accent-d); }
+
+/* ══ Progress touch on focused orb ══ */
+.sea-progress-touch {
+  font-size: 11px; font-weight: 300; color: var(--ink4);
+  text-align: center; letter-spacing: .04em;
+  margin-top: 8px; cursor: pointer;
+  transition: color .14s; background: none; border: none;
+  font-family: inherit;
+}
+.sea-progress-touch:hover { color: var(--ink3); }

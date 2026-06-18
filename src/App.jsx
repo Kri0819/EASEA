@@ -9,6 +9,7 @@ import './styles/layout.css';
 import './styles/task.css';
 import './styles/login.css';
 import './styles/sheet.css';
+import './styles/ocean.css';
 
 import { useTasks }         from './hooks/useTasks.js';
 import { useIntentFlow }    from './hooks/useIntentFlow.js';
@@ -347,272 +348,351 @@ function LoginPage() {
 }
 
 // ─────────────────────────────────────────────────────────────────
-//  § 8a  ProgressIndicator
-//        Tap the dot to mark progress. Green = touched today.
+//  § 8  OceanOrb — a task as a floating light orb
 // ─────────────────────────────────────────────────────────────────
-function ProgressIndicator({ hasProgress, isDone, intent, intentHint }) {
-  if (isDone) return null;
-  if (hasProgress) {
-    return <span className="progress-dot" title="今天有前進一點" />;
-  }
-  return <span className={`tl-dot tld-${intent.toLowerCase()}`} title={intentHint} />;
+
+// Orb sizes vary slightly by intent — NOW is largest
+const ORB_SIZE = { NOW: 72, SOON: 62, LATER: 54, SHELF: 46 };
+
+// Orb color palette — layered ellipses, same visual language as EaseaLogo
+const ORB_PALETTE = [
+  { outer:'#C8D8F8', mid:'#B8B0E8', inner:'#F4D8C8' }, // blue-purple-peach (default)
+  { outer:'#C0DDF0', mid:'#A8C8E0', inner:'#E8D4C0' }, // sea-blue-sand
+  { outer:'#D0C8F0', mid:'#B8A8E0', inner:'#F0D8D8' }, // lavender-blush
+  { outer:'#B8D8E8', mid:'#A0C0D8', inner:'#E0D0B8' }, // aqua-warm
+];
+
+function OrbSVG({ size, palette, isDone }) {
+  const id = `orb-${size}-${palette.outer.slice(1,4)}`;
+  const op = isDone ? 0.35 : 1;
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none"
+      style={{ filter: isDone ? 'grayscale(.5)' : 'none', opacity: op }}>
+      <defs>
+        <radialGradient id={`${id}-o`} cx="48%" cy="44%" r="52%">
+          <stop offset="0%"  stopColor={palette.outer} stopOpacity=".62"/>
+          <stop offset="100%" stopColor={palette.outer} stopOpacity=".06"/>
+        </radialGradient>
+        <radialGradient id={`${id}-m`} cx="46%" cy="54%" r="52%">
+          <stop offset="0%"  stopColor={palette.mid} stopOpacity=".74"/>
+          <stop offset="100%" stopColor={palette.mid} stopOpacity=".08"/>
+        </radialGradient>
+        <radialGradient id={`${id}-i`} cx="58%" cy="43%" r="52%">
+          <stop offset="0%"  stopColor={palette.inner} stopOpacity=".80"/>
+          <stop offset="100%" stopColor={palette.inner} stopOpacity=".00"/>
+        </radialGradient>
+        <radialGradient id={`${id}-c`} cx="38%" cy="34%" r="40%">
+          <stop offset="0%"  stopColor="#FFFFFF" stopOpacity=".82"/>
+          <stop offset="100%" stopColor="#FFFFFF" stopOpacity=".00"/>
+        </radialGradient>
+        <filter id={`${id}-s`} x="-15%" y="-15%" width="130%" height="130%">
+          <feGaussianBlur stdDeviation="2.2"/>
+        </filter>
+        <filter id={`${id}-d`} x="-150%" y="-150%" width="400%" height="400%">
+          <feGaussianBlur stdDeviation="0.6"/>
+        </filter>
+      </defs>
+      {/* 3 offset ellipses */}
+      <ellipse cx="50" cy="48" rx="45" ry="42" fill={`url(#${id}-o)`} transform="rotate(-6 50 48)"/>
+      <ellipse cx="46" cy="54" rx="34" ry="38" fill={`url(#${id}-m)`} transform="rotate(8 46 54)"/>
+      <ellipse cx="56" cy="43" rx="30" ry="26" fill={`url(#${id}-i)`} transform="rotate(-10 56 43)"/>
+      <ellipse cx="48" cy="46" rx="22" ry="20" fill={`url(#${id}-c)`} transform="rotate(5 48 46)"/>
+      {/* 3 light dots */}
+      <circle cx="36" cy="46" r="2.2" fill="white" opacity=".88" filter={`url(#${id}-d)`}/>
+      <circle cx="52" cy="60" r="1.4" fill="white" opacity=".68" filter={`url(#${id}-d)`}/>
+      <circle cx="63" cy="42" r="0.9" fill="white" opacity=".52" filter={`url(#${id}-d)`}/>
+    </svg>
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────
-//  § 8b  TaskSteps
-//        Steps list + add-step input inside the drawer.
-//        Props: taskId, steps, onToggleStep, onAddStep
+//  § 9  KelpChain — steps growing down from an orb
 // ─────────────────────────────────────────────────────────────────
-function TaskSteps({ taskId, steps, onToggleStep, onAddStep }) {
-  const [adding, setAdding] = useState(false);
-  const [stepIn, setStepIn] = useState("");
+function KelpChain({ task, onToggleStep, onAddStep, onMarkProgress }) {
+  const [adding,  setAdding]  = useState(false);
+  const [stepIn,  setStepIn]  = useState("");
+  const steps     = task.steps || [];
+  const hasProgress = task.progress_today === true;
 
   const doAdd = () => {
     if (!stepIn.trim()) return;
-    onAddStep(taskId, stepIn.trim());
-    setStepIn("");
-    setAdding(false);
+    onAddStep(task.id, stepIn.trim());
+    setStepIn(""); setAdding(false);
   };
 
   return (
-    <>
-      {steps.length > 0 && (
-        <div className="tl-steps">
-          {steps.map(s => (
-            <div className="tls-row" key={s.id}>
-              <button
-                className={`tls-check${s.is_completed ? " done" : ""}`}
-                onClick={() => onToggleStep(taskId, s.id)}
-              >
-                {s.is_completed && <TinyCheck size={7} />}
-              </button>
-              <span className={`tls-label${s.is_completed ? " done" : ""}`}>{s.title}</span>
-            </div>
-          ))}
-        </div>
-      )}
-      {!adding
-        ? <button className="tl-ghost" onClick={() => setAdding(true)}>+ 步驟</button>
-        : (
-          <div className="tl-addinput">
-            <input
-              autoFocus placeholder="步驟名稱…" value={stepIn}
-              onChange={e => setStepIn(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") doAdd(); if (e.key === "Escape") setAdding(false); }}
-            />
-            <button onClick={doAdd}>加</button>
-          </div>
-        )
-      }
-    </>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────
-//  § 8c  TaskActions
-//        Promote / demote / remove buttons in drawer.
-//        Props: taskId, intent, onShiftIntent, onDelete
-// ─────────────────────────────────────────────────────────────────
-function TaskActions({ taskId, intent, onShiftIntent, onDelete }) {
-  const canPromote = !!IntentMachine[intent]?.promote;
-  const canDemote  = !!IntentMachine[intent]?.demote;
-
-  return (
-    <div className="tl-actions">
-      <button
-        className="tl-act promote"
-        onClick={() => onShiftIntent(taskId, "promote")}
-        disabled={!canPromote}
-      >
-        ↑ {canPromote ? IntentUI[IntentMachine[intent].promote].label : "—"}
-      </button>
-      <button
-        className="tl-act demote"
-        onClick={() => onShiftIntent(taskId, "demote")}
-        disabled={!canDemote}
-      >
-        ↓ {canDemote ? IntentUI[IntentMachine[intent].demote].label : "—"}
-      </button>
-      <button className="tl-act remove" onClick={() => onDelete(taskId)}>
-        移除
-      </button>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────
-//  § 8  TaskLine
-//       Orchestrates sub-components.
-//       All animation, CSS classes, and props unchanged.
-// ─────────────────────────────────────────────────────────────────
-function TaskLine({ task, index, onToggleDone, onToggleStep, onShiftIntent, onMarkProgress, onAddStep, onDelete, isLeaving }) {
-  const [open, setOpen] = useState(false);
-
-  const steps       = task.steps || [];
-  const intent      = task.intent_state || "LATER";
-  const ui          = IntentUI[intent];
-  const isDone      = task.status === "done";
-  const hasProgress = task.progress_today === true;
-
-  const opacity = isDone ? 0.28 : Math.max(1 - index * 0.09, 0.72);
-  const shiftY  = isDone ? 0    : index * 1.5;
-
-  return (
-    <div
-      className={`tl${isDone ? " tl-done" : ""}${isLeaving ? " tl-leaving" : ""}`}
-      style={{ opacity, transform: `translateY(${shiftY}px)` }}
-    >
-      <div className="tl-row" onClick={() => !isDone && setOpen(o => !o)}>
-        <button
-          className={`tl-check${isDone ? " done" : ""}`}
-          onClick={e => { e.stopPropagation(); onToggleDone(task.id); }}
-        >
-          {isDone && <TinyCheck />}
-        </button>
-        <span className={`tl-title${isDone ? " done" : ""}`}>{task.title}</span>
-        <ProgressIndicator
-          hasProgress={hasProgress}
-          isDone={isDone}
-          intent={intent}
-          intentHint={ui.hint}
-        />
-      </div>
-
-      {open && !isDone && (
-        <div className="tl-drawer">
-          {/* 今天有碰過 — 標記後消失 */}
-          {!hasProgress && (
+    <div className="kelp-chain">
+      {steps.map((s, i) => (
+        <div key={s.id} style={{ display:'flex', flexDirection:'column', alignItems:'center',
+          animationDelay: `${i * 55}ms` }}>
+          <div className="kelp-line" style={{ height: i === 0 ? 24 : 28 }} />
+          <div className="kelp-node appearing" style={{ animationDelay:`${i * 55}ms` }}>
             <button
-              className="progress-touch-btn"
-              onClick={e => { e.stopPropagation(); onMarkProgress(task.id); }}
+              className={`kelp-check${s.is_completed ? ' done' : ''}`}
+              onClick={e => { e.stopPropagation(); onToggleStep(task.id, s.id); }}
             >
-              今天有碰過
+              {s.is_completed && <TinyCheck size={7}/>}
             </button>
-          )}
-          <TaskSteps
-            taskId={task.id}
-            steps={steps}
-            onToggleStep={onToggleStep}
-            onAddStep={onAddStep}
-          />
-          <TaskActions
-            taskId={task.id}
-            intent={intent}
-            onShiftIntent={onShiftIntent}
-            onDelete={onDelete}
-          />
-          <p className="tl-hint">{ui.hint}</p>
+            <span className={`kelp-label${s.is_completed ? ' done' : ''}`}>{s.title}</span>
+          </div>
         </div>
+      ))}
+
+      {/* Add step */}
+      <div className="kelp-add-row" style={{ flexDirection:'column', alignItems:'center' }}>
+        <div className="kelp-add-line" style={{ height: steps.length > 0 ? 20 : 16 }} />
+        {!adding ? (
+          <button className="kelp-add-btn" onClick={e => { e.stopPropagation(); setAdding(true); }}>
+            + 步驟
+          </button>
+        ) : (
+          <div className="kelp-input-row" onClick={e => e.stopPropagation()}>
+            <input className="kelp-input" autoFocus placeholder="步驟名稱…"
+              value={stepIn} onChange={e => setStepIn(e.target.value)}
+              onKeyDown={e => { if(e.key==='Enter') doAdd(); if(e.key==='Escape') setAdding(false); }}/>
+            <button className="kelp-confirm" onClick={doAdd}>加</button>
+          </div>
+        )}
+      </div>
+
+      {/* Progress touch */}
+      {!hasProgress && (
+        <button className="sea-progress-touch"
+          onClick={e => { e.stopPropagation(); onMarkProgress(task.id); }}>
+          今天有碰過
+        </button>
       )}
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────
-//  § 9  AddSheet — frosted glass capture
+//  § 10  SeaSurface — the ocean with floating orbs
 // ─────────────────────────────────────────────────────────────────
-function AddSheet({ onClose, onAdd }) {
-  const [title, setTitle]   = useState("");
-  const [intent,setIntent]  = useState("LATER");
 
-  const STATES=[["NOW","此刻"],["SOON","稍後"],["LATER","晚點"],["SHELF","留著"]];
+// Stable positions seeded from task id — same task always spawns at same place
+function stablePos(id, canvasW = 1400, canvasH = 1000) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (Math.imul(31, h) + id.charCodeAt(i)) | 0;
+  const x = 120 + Math.abs(h % (canvasW - 240));
+  const y = 140 + Math.abs(((h >> 8) & 0xFFFF) % (canvasH - 280));
+  return { x, y };
+}
 
-  const submit = () => {
-    if(!title.trim()) return;
-    onAdd({id:uid(),title:title.trim(),steps:[],due_date:todayStr(),status:"active",auto_shifted:false,...mkIntent(intent)});
-    onClose();
+const CANVAS_W = 1400;
+const CANVAS_H = 1000;
+
+function SeaSurface({ tasks, onToggleDone, onToggleStep, onShiftIntent, onMarkProgress, onAddStep, onDelete }) {
+  const today   = todayStr();
+  const stream  = useMemo(() =>
+    tasks.filter(tk => tk.status !== 'done' && (tk.due_date === today || tk.auto_shifted))
+         .sort((a,b) => flowScore(b) - flowScore(a)),
+    [tasks, today]
+  );
+  const doneTasks = useMemo(() =>
+    tasks.filter(tk => tk.status === 'done' && tk.due_date === today),
+    [tasks, today]
+  );
+
+  const [focused,  setFocused]  = useState(null); // task.id
+  const [pan,      setPan]      = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
+  const dragRef  = useRef({ startX:0, startY:0, panX:0, panY:0, moved:false });
+  const canvasRef = useRef(null);
+
+  // On focus: pan to center the orb
+  const focusTask = useCallback((task) => {
+    if (dragging) return;
+    setFocused(task.id);
+    const pos = stablePos(task.id);
+    const vw  = canvasRef.current?.clientWidth  || 430;
+    const vh  = canvasRef.current?.clientHeight || 600;
+    const targetX = -(pos.x - vw / 2);
+    const targetY = -(pos.y - vh / 2.8);
+    setPan({ x: clampPan(targetX, vw, CANVAS_W), y: clampPan(targetY, vh, CANVAS_H) });
+  }, [dragging]);
+
+  const unfocus = useCallback(() => setFocused(null), []);
+
+  // Pan clamping
+  const clampPan = (v, viewport, surface) => {
+    const min = -(surface - viewport);
+    return Math.max(min, Math.min(0, v));
   };
 
+  // Touch/mouse pan
+  const onPointerDown = useCallback(e => {
+    if (focused) return; // no pan while focused
+    dragRef.current = { startX: e.clientX, startY: e.clientY, panX: pan.x, panY: pan.y, moved: false };
+    setDragging(true);
+  }, [pan, focused]);
+
+  const onPointerMove = useCallback(e => {
+    if (!dragging) return;
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    if (Math.abs(dx) + Math.abs(dy) > 4) dragRef.current.moved = true;
+    const vw = canvasRef.current?.clientWidth  || 430;
+    const vh = canvasRef.current?.clientHeight || 600;
+    setPan({
+      x: clampPan(dragRef.current.panX + dx, vw, CANVAS_W),
+      y: clampPan(dragRef.current.panY + dy, vh, CANVAS_H),
+    });
+  }, [dragging]);
+
+  const onPointerUp = useCallback(() => {
+    setDragging(false);
+  }, []);
+
+  const hr    = new Date().getHours();
+  const greet = hr < 5 ? '深夜了。' : hr < 12 ? '早安。' : hr < 18 ? '午安。' : '晚安。';
+
+  const IntentMachineRef = IntentMachine; // closure
+
   return (
-    <div className="sveil" onClick={onClose}>
-      <div className="sglass" onClick={e=>e.stopPropagation()}>
-        <div className="spull"/>
-        <p className="swhisper">想到什麼，就先放進來。</p>
-        <input className="sfield" autoFocus placeholder="現在想到的是⋯"
-          value={title} onChange={e=>setTitle(e.target.value)}
-          onKeyDown={e=>e.key==="Enter"&&submit()}/>
-        <div className="sintents">
-          {STATES.map(([s,l])=>(
-            <button key={s} className={`sint sint-${s.toLowerCase()}${intent===s?" on":""}`} onClick={()=>setIntent(s)}>{l}</button>
-          ))}
+    <div className="ocean-view" style={{ padding: 0, position:'relative' }}>
+
+      {/* Back hint when focused */}
+      {focused && (
+        <button className="sea-back" onClick={unfocus}>← 返回海面</button>
+      )}
+
+      {/* Greeting */}
+      {!focused && (
+        <div className="sea-greeting">
+          <p className="sea-greeting-text">{greet} {stream.length > 0 ? `${stream.length} 件漂著。` : '今天空空的。'}</p>
         </div>
-        <button className="sdrop" onClick={submit}>放進今天</button>
+      )}
+
+      {/* Canvas */}
+      <div
+        ref={canvasRef}
+        className="sea-canvas"
+        onMouseDown={onPointerDown}
+        onMouseMove={onPointerMove}
+        onMouseUp={onPointerUp}
+        onMouseLeave={onPointerUp}
+        onTouchStart={e => onPointerDown(e.touches[0])}
+        onTouchMove={e => onPointerMove(e.touches[0])}
+        onTouchEnd={onPointerUp}
+      >
+        <div
+          className={`sea-surface${focused ? ' animating' : ''}`}
+          style={{ transform: `translate(${pan.x}px, ${pan.y}px)` }}
+        >
+          {stream.map((task, idx) => {
+            const pos     = stablePos(task.id);
+            const intent  = task.intent_state || 'LATER';
+            const isFoc   = focused === task.id;
+            const isDim   = focused && focused !== task.id;
+            const palette = ORB_PALETTE[idx % ORB_PALETTE.length];
+            const size    = ORB_SIZE[intent] || 56;
+            const bobDur  = 4.5 + (idx * 0.7) % 2.5;
+            const bobDel  = (idx * 0.9) % 3;
+
+            return (
+              <div
+                key={task.id}
+                className={`sea-orb-wrap${isFoc ? ' focused' : ''}${isDim ? ' dimmed' : ''}`}
+                style={{
+                  left: pos.x - size / 2,
+                  top:  pos.y - size / 2,
+                  '--bob-dur':   `${bobDur}s`,
+                  '--bob-delay': `${bobDel}s`,
+                }}
+                onClick={() => !dragRef.current.moved && (isFoc ? unfocus() : focusTask(task))}
+              >
+                <div className="sea-orb">
+                  <OrbSVG size={isFoc ? size * 1.15 : size} palette={palette} isDone={false}/>
+                  {/* Intent dot */}
+                  <span className={`sea-intent-dot sid-${intent.toLowerCase()}`}/>
+                </div>
+
+                <span className="sea-orb-label">{task.title}</span>
+
+                {/* Kelp chain — only when focused */}
+                {isFoc && (
+                  <KelpChain
+                    task={task}
+                    onToggleStep={onToggleStep}
+                    onAddStep={onAddStep}
+                    onMarkProgress={onMarkProgress}
+                  />
+                )}
+              </div>
+            );
+          })}
+
+          {/* Done orbs — very faint, fixed positions */}
+          {doneTasks.map((task, idx) => {
+            const pos  = stablePos(task.id);
+            const size = 38;
+            return (
+              <div key={task.id} className="sea-orb-wrap done-orb"
+                style={{ left: pos.x - size / 2, top: pos.y - size / 2 }}>
+                <OrbSVG size={size} palette={ORB_PALETTE[idx % ORB_PALETTE.length]} isDone={true}/>
+                <span className="sea-orb-label" style={{ fontSize:11, opacity:.4 }}>{task.title}</span>
+              </div>
+            );
+          })}
+        </div>
       </div>
-    </div>
-  );
-}
 
-// ─────────────────────────────────────────────────────────────────
-//  § 10  UserMenu
-// ─────────────────────────────────────────────────────────────────
-function UserMenu({ onClose }) {
-  const { session, signOut } = useContext(AuthCtx);
-  const { theme, setTheme }  = useContext(ThemeCtx);
-  const ref = useRef(null);
-  useEffect(()=>{
-    const h=e=>{if(ref.current&&!ref.current.contains(e.target))onClose();};
-    setTimeout(()=>document.addEventListener("mousedown",h),0);
-    return()=>document.removeEventListener("mousedown",h);
-  },[onClose]);
-  return (
-    <div className="umenu" ref={ref}>
-      <div className="u-email">{session?.user?.email}</div>
-      <div className="u-themes">
-        {[["light","☀️"],["dark","🌙"]].map(([t,i])=>(
-          <button key={t} className={`uth${theme===t?" on":""}`} onClick={()=>setTheme(t)}>{i}</button>
-        ))}
-      </div>
-      <button className="u-out" onClick={()=>{signOut();onClose();}}>登出</button>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────
-//  § 11  TodayFlow — uses useIntentFlow + useTaskAnimation
-// ─────────────────────────────────────────────────────────────────
-const SURFACE = 3;
-
-function TodayFlow({ tasks, onToggleDone, onToggleStep, onShiftIntent, onMarkProgress, onAddStep, onDelete }) {
-  const today = todayStr();
-  const [showRest, setShowRest] = useState(false);
-
-  const { surface, rest, greet, sub } = useIntentFlow(tasks, today, flowScore);
-  const { leaving, handleDone }       = useTaskAnimation(tasks, onToggleDone);
-
-  const h = { onToggleDone: handleDone, onToggleStep, onShiftIntent, onMarkProgress, onAddStep, onDelete };
-
-  return (
-    <div className="ocean-view">
-      <div className="ov-header">
-        <h1 className="ov-greet">{greet}</h1>
-        <p  className="ov-sub">{sub}</p>
-      </div>
-
-      <div className="ov-surface">
-        {surface.length === 0 && rest.length === 0 && (
-          <div className="ov-empty">
-            <span className="ov-wave">🌊</span>
-            <p className="ov-empty-title">今天空空的。</p>
-            <p className="ov-empty-sub">什麼都不用管。</p>
+      {/* Action bar — shown when focused */}
+      {focused && (() => {
+        const task   = tasks.find(t => t.id === focused);
+        if (!task) return null;
+        const intent = task.intent_state || 'LATER';
+        const canP   = !!IntentMachineRef[intent]?.promote;
+        const canD   = !!IntentMachineRef[intent]?.demote;
+        return (
+          <div className="sea-action-bar">
+            <button className="sea-act-btn" onClick={() => { onToggleDone(task.id); unfocus(); }}>
+              ✓ 完成
+            </button>
+            {canP && (
+              <button className="sea-act-btn promote"
+                onClick={() => onShiftIntent(task.id, 'promote')}>
+                ↑ {IntentUI[IntentMachineRef[intent].promote].label}
+              </button>
+            )}
+            {canD && (
+              <button className="sea-act-btn"
+                onClick={() => onShiftIntent(task.id, 'demote')}>
+                ↓ {IntentUI[IntentMachineRef[intent].demote].label}
+              </button>
+            )}
+            <button className="sea-act-btn danger"
+              onClick={() => { onDelete(task.id); unfocus(); }}>
+              移除
+            </button>
           </div>
-        )}
-
-        {surface.map((tk, i) => (
-          <TaskLine key={tk.id} task={tk} index={i} isLeaving={leaving.has(tk.id)} {...h} />
-        ))}
-
-        {rest.length > 0 && !showRest && (
-          <button className="ov-more" onClick={() => setShowRest(true)}>
-            還有 {rest.length} 件在後面
-          </button>
-        )}
-        {showRest && rest.map((tk, i) => (
-          <TaskLine key={tk.id} task={tk} index={SURFACE + i} isLeaving={leaving.has(tk.id)} {...h} />
-        ))}
-      </div>
+        );
+      })()}
     </div>
   );
 }
+
+// ─────────────────────────────────────────────────────────────────
+//  § 11  TodayFlow — wraps SeaSurface
+// ─────────────────────────────────────────────────────────────────
+function TodayFlow({ tasks, onToggleDone, onToggleStep, onShiftIntent, onMarkProgress, onAddStep, onDelete }) {
+  return (
+    <SeaSurface
+      tasks={tasks}
+      onToggleDone={onToggleDone}
+      onToggleStep={onToggleStep}
+      onShiftIntent={onShiftIntent}
+      onMarkProgress={onMarkProgress}
+      onAddStep={onAddStep}
+      onDelete={onDelete}
+    />
+  );
+}
+
+
+
+// ─────────────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────
 //  § 12  AppShell — uses useTasks
