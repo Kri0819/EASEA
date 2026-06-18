@@ -470,12 +470,23 @@ function KelpChain({ task, onToggleStep, onAddStep, onMarkProgress }) {
 //  § 10  SeaSurface — the ocean with floating orbs
 // ─────────────────────────────────────────────────────────────────
 
-// Stable positions seeded from task id — same task always spawns at same place
+// Pan clamping — defined before use
+const clampPan = (v, viewport, surface) => {
+  if (surface <= viewport) return 0;
+  const min = -(surface - viewport);
+  return Math.max(min, Math.min(0, v));
+};
+
+// Stable positions — compact range so orbs start visible on mobile
+// Uses 600×700 area centered in the canvas
 function stablePos(id, canvasW = 1400, canvasH = 1000) {
   let h = 0;
   for (let i = 0; i < id.length; i++) h = (Math.imul(31, h) + id.charCodeAt(i)) | 0;
-  const x = 120 + Math.abs(h % (canvasW - 240));
-  const y = 140 + Math.abs(((h >> 8) & 0xFFFF) % (canvasH - 280));
+  // Scatter in a 500×400 zone, centered at canvas midpoint
+  const cx = canvasW / 2;
+  const cy = canvasH / 2;
+  const x = cx - 250 + Math.abs(h % 500);
+  const y = cy - 200 + Math.abs(((h >> 8) & 0xFFFF) % 400);
   return { x, y };
 }
 
@@ -494,35 +505,44 @@ function SeaSurface({ tasks, onToggleDone, onToggleStep, onShiftIntent, onMarkPr
     [tasks, today]
   );
 
-  const [focused,  setFocused]  = useState(null); // task.id
-  const [pan,      setPan]      = useState({ x: 0, y: 0 });
-  const [dragging, setDragging] = useState(false);
-  const dragRef  = useRef({ startX:0, startY:0, panX:0, panY:0, moved:false });
   const canvasRef = useRef(null);
+  const dragRef   = useRef({ startX:0, startY:0, panX:0, panY:0, moved:false });
 
-  // On focus: pan to center the orb
-  const focusTask = useCallback((task) => {
-    if (dragging) return;
-    setFocused(task.id);
-    const pos = stablePos(task.id);
-    const vw  = canvasRef.current?.clientWidth  || 430;
-    const vh  = canvasRef.current?.clientHeight || 600;
-    const targetX = -(pos.x - vw / 2);
-    const targetY = -(pos.y - vh / 2.8);
-    setPan({ x: clampPan(targetX, vw, CANVAS_W), y: clampPan(targetY, vh, CANVAS_H) });
-  }, [dragging]);
-
-  const unfocus = useCallback(() => setFocused(null), []);
-
-  // Pan clamping
-  const clampPan = (v, viewport, surface) => {
-    const min = -(surface - viewport);
-    return Math.max(min, Math.min(0, v));
+  // Start pan so canvas center aligns with viewport center
+  const getInitialPan = () => {
+    const vw = window.innerWidth  || 430;
+    const vh = window.innerHeight || 700;
+    return {
+      x: clampPan(-(CANVAS_W / 2 - vw / 2),  vw, CANVAS_W),
+      y: clampPan(-(CANVAS_H / 2 - vh / 2.5), vh, CANVAS_H),
+    };
   };
 
-  // Touch/mouse pan
+  const [focused,  setFocused]  = useState(null);
+  const [pan,      setPan]      = useState(getInitialPan);
+  const [dragging, setDragging] = useState(false);
+
+  // On focus: animate pan to center the tapped orb
+  const focusTask = useCallback((task) => {
+    if (dragRef.current.moved) return;
+    setFocused(task.id);
+    const pos = stablePos(task.id);
+    const vw  = canvasRef.current?.clientWidth  || window.innerWidth  || 430;
+    const vh  = canvasRef.current?.clientHeight || window.innerHeight || 700;
+    setPan({
+      x: clampPan(-(pos.x - vw / 2),   vw, CANVAS_W),
+      y: clampPan(-(pos.y - vh / 2.8),  vh, CANVAS_H),
+    });
+  }, []);
+
+  const unfocus = useCallback(() => {
+    setFocused(null);
+    setPan(getInitialPan());
+  }, []);
+
+  // Pointer events for pan
   const onPointerDown = useCallback(e => {
-    if (focused) return; // no pan while focused
+    if (focused) return;
     dragRef.current = { startX: e.clientX, startY: e.clientY, panX: pan.x, panY: pan.y, moved: false };
     setDragging(true);
   }, [pan, focused]);
@@ -531,9 +551,9 @@ function SeaSurface({ tasks, onToggleDone, onToggleStep, onShiftIntent, onMarkPr
     if (!dragging) return;
     const dx = e.clientX - dragRef.current.startX;
     const dy = e.clientY - dragRef.current.startY;
-    if (Math.abs(dx) + Math.abs(dy) > 4) dragRef.current.moved = true;
-    const vw = canvasRef.current?.clientWidth  || 430;
-    const vh = canvasRef.current?.clientHeight || 600;
+    if (Math.abs(dx) + Math.abs(dy) > 5) dragRef.current.moved = true;
+    const vw = canvasRef.current?.clientWidth  || window.innerWidth  || 430;
+    const vh = canvasRef.current?.clientHeight || window.innerHeight || 700;
     setPan({
       x: clampPan(dragRef.current.panX + dx, vw, CANVAS_W),
       y: clampPan(dragRef.current.panY + dy, vh, CANVAS_H),
@@ -542,6 +562,7 @@ function SeaSurface({ tasks, onToggleDone, onToggleStep, onShiftIntent, onMarkPr
 
   const onPointerUp = useCallback(() => {
     setDragging(false);
+    setTimeout(() => { dragRef.current.moved = false; }, 50);
   }, []);
 
   const hr    = new Date().getHours();

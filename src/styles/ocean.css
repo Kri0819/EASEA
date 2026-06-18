@@ -4,11 +4,13 @@
 .sea-canvas {
   position: relative;
   width: 100%;
-  height: calc(100vh - 80px);
+  height: calc(100dvh - 72px);
+  min-height: 480px;
   overflow: hidden;
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
+  touch-action: none;
 }
 .sea-canvas:active { cursor: grabbing; }
 
