@@ -470,25 +470,53 @@ function KelpChain({ task, onToggleStep, onAddStep, onMarkProgress }) {
 //  § 10  SeaSurface — the ocean with floating orbs
 // ─────────────────────────────────────────────────────────────────
 
-// Pan clamping — defined before use
+// Stable positions with repulsion — orbs won't crowd each other
+function stablePos(id, canvasW = 1400, canvasH = 1000) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (Math.imul(31, h) + id.charCodeAt(i)) | 0;
+  const cx = canvasW / 2;
+  const cy = canvasH / 2;
+  // Spread across 80% of canvas
+  const x = cx - 380 + Math.abs(h % 760);
+  const y = cy - 280 + Math.abs(((h >> 8) & 0xFFFF) % 560);
+  return { x, y };
+}
+
+// Build positions with repulsion pass — push apart any orbs that are too close
+function buildPositions(tasks) {
+  const MIN_DIST = 190; // px — accounts for orb + label text width
+  const positions = {};
+  tasks.forEach(t => { positions[t.id] = stablePos(t.id); });
+
+  // 5 relaxation passes for better separation
+  for (let pass = 0; pass < 5; pass++) {
+    const ids = Object.keys(positions);
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        const a = positions[ids[i]];
+        const b = positions[ids[j]];
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < MIN_DIST && dist > 0) {
+          const push = (MIN_DIST - dist) / 2;
+          const nx = dx / dist;
+          const ny = dy / dist;
+          positions[ids[i]] = { x: a.x - nx * push, y: a.y - ny * push };
+          positions[ids[j]] = { x: b.x + nx * push, y: b.y + ny * push };
+        }
+      }
+    }
+  }
+  return positions;
+}
+
+// Pan clamping
 const clampPan = (v, viewport, surface) => {
   if (surface <= viewport) return 0;
   const min = -(surface - viewport);
   return Math.max(min, Math.min(0, v));
 };
-
-// Stable positions — compact range so orbs start visible on mobile
-// Uses 600×700 area centered in the canvas
-function stablePos(id, canvasW = 1400, canvasH = 1000) {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (Math.imul(31, h) + id.charCodeAt(i)) | 0;
-  // Scatter in a 500×400 zone, centered at canvas midpoint
-  const cx = canvasW / 2;
-  const cy = canvasH / 2;
-  const x = cx - 250 + Math.abs(h % 500);
-  const y = cy - 200 + Math.abs(((h >> 8) & 0xFFFF) % 400);
-  return { x, y };
-}
 
 const CANVAS_W = 1400;
 const CANVAS_H = 1000;
@@ -503,6 +531,12 @@ function SeaSurface({ tasks, onToggleDone, onToggleStep, onShiftIntent, onMarkPr
   const doneTasks = useMemo(() =>
     tasks.filter(tk => tk.status === 'done' && tk.due_date === today),
     [tasks, today]
+  );
+
+  // Build all positions once — repulsion applied across active + done tasks
+  const positions = useMemo(
+    () => buildPositions([...stream, ...doneTasks]),
+    [stream, doneTasks]
   );
 
   const canvasRef = useRef(null);
@@ -526,14 +560,14 @@ function SeaSurface({ tasks, onToggleDone, onToggleStep, onShiftIntent, onMarkPr
   const focusTask = useCallback((task) => {
     if (dragRef.current.moved) return;
     setFocused(task.id);
-    const pos = stablePos(task.id);
+    const pos = positions[task.id] || stablePos(task.id);
     const vw  = canvasRef.current?.clientWidth  || window.innerWidth  || 430;
     const vh  = canvasRef.current?.clientHeight || window.innerHeight || 700;
     setPan({
       x: clampPan(-(pos.x - vw / 2),   vw, CANVAS_W),
       y: clampPan(-(pos.y - vh / 2.8),  vh, CANVAS_H),
     });
-  }, []);
+  }, [positions]);
 
   const unfocus = useCallback(() => {
     setFocused(null);
@@ -602,7 +636,7 @@ function SeaSurface({ tasks, onToggleDone, onToggleStep, onShiftIntent, onMarkPr
           style={{ transform: `translate(${pan.x}px, ${pan.y}px)` }}
         >
           {stream.map((task, idx) => {
-            const pos     = stablePos(task.id);
+            const pos     = positions[task.id] || stablePos(task.id);
             const intent  = task.intent_state || 'LATER';
             const isFoc   = focused === task.id;
             const isDim   = focused && focused !== task.id;
@@ -646,7 +680,7 @@ function SeaSurface({ tasks, onToggleDone, onToggleStep, onShiftIntent, onMarkPr
 
           {/* Done orbs — very faint, fixed positions */}
           {doneTasks.map((task, idx) => {
-            const pos  = stablePos(task.id);
+            const pos  = positions[task.id] || stablePos(task.id);
             const size = 38;
             return (
               <div key={task.id} className="sea-orb-wrap done-orb"

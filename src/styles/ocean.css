@@ -102,6 +102,11 @@
   opacity: .85;
   transition: opacity 300ms ease, color 300ms ease;
   pointer-events: none;
+  /* Subtle halo so overlapping labels stay readable */
+  text-shadow:
+    0 0 6px var(--bg),
+    0 0 10px var(--bg),
+    0 0 14px var(--bg);
 }
 .sea-orb-wrap:hover   .sea-orb-label { opacity: 1; color: var(--ink); }
 .sea-orb-wrap.focused .sea-orb-label {
